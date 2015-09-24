@@ -339,8 +339,7 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
 	BOOL isComposing = NO;
 	BOOL shouldDeleteComposingMessage = NO;
 	
-	if ([messageBody length] == 0)
-	{
+    if (([messageBody length] == 0) && (![[[message attributeForName:@"type"] stringValue] isEqualToString:@"file"]))	{
 		// Message doesn't have a body.
 		// Check to see if it has a chat state (composing, paused, etc).
 		

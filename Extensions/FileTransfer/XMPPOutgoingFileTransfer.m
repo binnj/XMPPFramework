@@ -9,6 +9,7 @@
 
 #import <ifaddrs.h>
 #import <net/if.h>
+#import <netinet6/in6.h>
 #import <netinet/in.h>
 #import <arpa/inet.h>
 #import "XMPPLogging.h"
@@ -20,7 +21,7 @@
 #import "NSData+XMPP.h"
 
 #if DEBUG
-static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN; // XMPP_LOG_LEVEL_VERBOSE | XMPP_LOG_FLAG_TRACE;
+static const int xmppLogLevel = XMPP_LOG_LEVEL_VERBOSE | XMPP_LOG_FLAG_TRACE;
 #else
     static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 #endif
@@ -120,8 +121,8 @@ NSString *const XMPPOutgoingFileTransferErrorDomain = @"XMPPOutgoingFileTransfer
 - (void)didActivate
 {
   XMPPLogTrace();
-
-  _idTracker = [[XMPPIDTracker alloc] initWithStream:xmppStream dispatchQueue:moduleQueue];
+    
+    _idTracker = [[XMPPIDTracker alloc] initWithStream:xmppStream dispatchQueue:moduleQueue];
 }
 
 - (void)willDeactivate
@@ -1647,8 +1648,9 @@ NSString *const XMPPOutgoingFileTransferErrorDomain = @"XMPPOutgoingFileTransfer
 {
   NSString *type = iq.type;
 
-  if ([type isEqualToString:@"result"] || [type isEqualToString:@"error"]) {
-    return [_idTracker invokeForElement:iq withObject:iq];
+    if ([type isEqualToString:@"result"] || [type isEqualToString:@"error"]) {
+        return [_idTracker invokeForElement:iq withObject:iq];
+//        return [_idTracker invokeForID:@"iq" withObject:iq];
   }
 
   return NO;
@@ -1726,9 +1728,10 @@ shouldTimeoutReadWithTag:(long)tag
                  elapsed:(NSTimeInterval)elapsed
                bytesDone:(NSUInteger)length
 {
-  XMPPLogVerbose(@"%@: socket shouldTimeoutReadWithTag:%ld elapsed:%f bytesDone:%lu", THIS_FILE, tag, elapsed, (unsigned long)length);
+  XMPPLogVerbose(@"%@: socket shouldTimeoutReadWithTag:%ld elapsed:%d bytesDone:%d", THIS_FILE, tag,
+                 elapsed, length);
 
-  NSString *reason = [NSString stringWithFormat:@"Read timeout. %lu bytes read.", (unsigned long)length];
+  NSString *reason = [NSString stringWithFormat:@"Read timeout. %d bytes read.", length];
   [self failWithReason:reason error:nil];
 
   return 0;
