@@ -17,6 +17,7 @@
 
 
 + (XMPPvCardTempTel *)vCardTelFromElement:(NSXMLElement *)elem;
+- (id) init;
 
 @property (nonatomic, assign, setter=setHome:)      BOOL isHome;
 @property (nonatomic, assign, setter=setWork:)      BOOL isWork;

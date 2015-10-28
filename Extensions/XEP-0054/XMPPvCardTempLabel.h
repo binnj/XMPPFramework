@@ -20,6 +20,7 @@
 
 
 + (XMPPvCardTempLabel *)vCardLabelFromElement:(NSXMLElement *)elem;
+- (id) init;
 
 
 @end
