@@ -49,6 +49,7 @@
 	}
 }
 
+#endif
 - (id) init
 {
     return [self initWithName:@"LABEL"];
