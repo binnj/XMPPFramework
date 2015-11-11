@@ -51,7 +51,7 @@ NSString *const kXMPPvCardTempElement = @"vCard";
 		XMPPLogError(@"Adding instance variables to XMPPvCardTemp is not currently supported!");
 		
 		[DDLog flushLog];
-		exit(15);
+//		exit(15);
 	}
 }
 
