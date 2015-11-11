@@ -19,13 +19,12 @@
 
 #if DEBUG
   static const int xmppLogLevel = XMPP_LOG_LEVEL_ERROR;
-#else
-  static const int xmppLogLevel = XMPP_LOG_LEVEL_ERROR;
 #endif
 
 
 @implementation XMPPvCardTempAdr
 
+#if DEBUG
 
 + (void)initialize
 {
@@ -50,6 +49,8 @@
 		exit(15);
 	}
 }
+
+#endif
 - (id) init
 {
     return [self initWithName:@"ADR"];
