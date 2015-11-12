@@ -18,13 +18,28 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 
 #define XMLNS_XMPP_ARCHIVE @"urn:xmpp:mam:1"
 
+// XMPP Incoming File Transfer State
+typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
+    XMPPMessageArchiveSyncStateNone,
+    XMPPMessageArchiveSyncStateWaitingForSyncResponse,
+    XMPPMessageArchiveSyncStateSyncing,
+    XMPPMessageArchiveSyncStateCompleted
+};
+
+@interface XMPPMessageArchiveManagement()
+{
+    XMPPMessageArchiveSyncState _syncState;
+}
+
+@end
+
 @implementation XMPPMessageArchiveManagement
 
 - (id)init
 {
     // This will cause a crash - it's designed to.
     // Only the init methods listed in XMPPMessageArchiving.h are supported.
-    
+    _syncState = XMPPMessageArchiveSyncStateNone;
     return [self initWithMessageArchivingStorage:nil dispatchQueue:NULL];
 }
 
@@ -33,11 +48,13 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
     // This will cause a crash - it's designed to.
     // Only the init methods listed in XMPPMessageArchiving.h are supported.
     
+    _syncState = XMPPMessageArchiveSyncStateNone;
     return [self initWithMessageArchivingStorage:nil dispatchQueue:queue];
 }
 
 - (id)initWithMessageArchivingStorage:(id <XMPPMessageArchivingStorage>)storage
 {
+    _syncState = XMPPMessageArchiveSyncStateNone;
     return [self initWithMessageArchivingStorage:storage dispatchQueue:NULL];
 }
 
@@ -64,6 +81,7 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
         
         preferences = pref;
     }
+    _syncState = XMPPMessageArchiveSyncStateNone;
     return self;
 }
 
@@ -86,6 +104,10 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 - (void)deactivate
 {
     XMPPLogTrace();
+    
+    if (_syncState != XMPPMessageArchiveSyncStateNone && _syncState != XMPPMessageArchiveSyncStateCompleted) {
+        XMPPLogWarn(@"%@: Deallocating prior to completion or cancellation.", THIS_FILE);
+    }
     
     // Reserved for future potential use
     
@@ -308,11 +330,12 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
         XMPPIQ *iq = [XMPPIQ iqWithType:@"set" elementID:fetchID child:query];
         
         [xmppStream sendElement:iq];
+        _syncState = XMPPMessageArchiveSyncStateWaitingForSyncResponse;
         
         [responseTracker addID:fetchID
                         target:self
                       selector:@selector(handleFetchArchivedMessageResponse:withInfo:)
-                       timeout:600.0];
+                       timeout:60.0];
         
     }};
     
