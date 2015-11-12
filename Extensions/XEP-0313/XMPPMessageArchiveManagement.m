@@ -22,13 +22,13 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     XMPPMessageArchiveSyncStateNone,
     XMPPMessageArchiveSyncStateWaitingForSyncResponse,
-    XMPPMessageArchiveSyncStateSyncing,
-    XMPPMessageArchiveSyncStateCompleted
+    XMPPMessageArchiveSyncStateSyncing
 };
 
 @interface XMPPMessageArchiveManagement()
 {
     XMPPMessageArchiveSyncState _syncState;
+    NSString* syncId;
 }
 
 @end
@@ -105,7 +105,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
 {
     XMPPLogTrace();
     
-    if (_syncState != XMPPMessageArchiveSyncStateNone && _syncState != XMPPMessageArchiveSyncStateCompleted) {
+    if (_syncState != XMPPMessageArchiveSyncStateNone) {
         XMPPLogWarn(@"%@: Deallocating prior to completion or cancellation.", THIS_FILE);
     }
     
@@ -211,66 +211,131 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         {
             [self setPreferences:pref];
         }
+        // Server returns the result IQ to signal the end
+        // <iq type='result' id='syncId'/>
+        else if (_syncState != XMPPMessageArchiveSyncStateNone && [[[iq attributeForName:@"id"] stringValue] isEqualToString:syncId])
+        {
+            //syncing completed
+            _syncState = XMPPMessageArchiveSyncStateNone;
+        }
     }
     return NO;
+}
+
+- (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message
+{
+    XMPPLogTrace();
+    
+    if ([self shouldArchiveMessage:message xmppStream:sender])
+    {
+        XMPPMessage *messageToSync = [self messageToSyncFromServerResponseMessage:message];
+        [xmppMessageArchivingStorage archiveMessage:messageToSync outgoing:[self isOutgoing:messageToSync] xmppStream:sender];
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark Utilities
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+- (BOOL)shouldArchiveMessage:(XMPPMessage *)message xmppStream:(XMPPStream *)xmppStream
+{
+    // If the message id does not exist in local storage it should be added
+    // A sync response message is in this format:
+    
+    //    <message id='aeb213' to='juliet@capulet.lit/chamber'>
+    //      <result xmlns='urn:xmpp:mam:1' queryid='f27' id='28482-98726-73623'>
+    //        <forwarded xmlns='urn:xmpp:forward:0'>
+    //          <delay xmlns='urn:xmpp:delay' stamp='2010-07-10T23:08:25Z'/>
+    //          <message xmlns='jabber:client' from="witch@shakespeare.lit" to="macbeth@shakespeare.lit">
+    //            <body>Hail to thee</body>
+    //          </message>
+    //        </forwarded>
+    //      </result>
+    //    </message>
+    
+    if (_syncState == XMPPMessageArchiveSyncStateWaitingForSyncResponse || _syncState == XMPPMessageArchiveSyncStateSyncing) {
+        if ([message elementsForName:@"result"].count > 0) {
+            NSXMLElement* result = [[message elementsForName:@"result"] firstObject];
+            if ([[[result attributeForName:@"xmlns"] stringValue] isEqualToString:XMLNS_XMPP_ARCHIVE]) {
+                _syncState = XMPPMessageArchiveSyncStateSyncing;
+                return YES;
+            }
+        }
+    }
+    return NO;
+}
+
+- (XMPPMessage*) messageToSyncFromServerResponseMessage:(XMPPMessage *)message
+{
+    // If the message id does not exist in local storage it should be added
+    // A sync response message is in this format:
+    
+    //    <message id='aeb213' to='juliet@capulet.lit/chamber'>
+    //      <result xmlns='urn:xmpp:mam:1' queryid='f27' id='28482-98726-73623'>
+    //        <forwarded xmlns='urn:xmpp:forward:0'>
+    //          <delay xmlns='urn:xmpp:delay' stamp='2010-07-10T23:08:25Z'/>
+    //          <message xmlns='jabber:client' from="witch@shakespeare.lit" to="macbeth@shakespeare.lit">
+    //            <body>Hail to thee</body>
+    //          </message>
+    //        </forwarded>
+    //      </result>
+    //    </message>
+    
+    NSXMLElement* result = [[message elementsForName:@"result"] firstObject];
+    NSXMLElement* forwarded = [[result elementsForName:@"forwarded"] firstObject];
+    NSXMLElement* delay = [[forwarded elementsForName:@"delay"] firstObject];
+    NSXMLElement* messageToSync = [[delay elementsForName:@"message"] firstObject];
+    [messageToSync addChild:delay.copy];
+    XMPPMessage* msgToSync = [XMPPMessage messageFromElement:messageToSync];
+    return msgToSync;
+}
+
+- (BOOL) isOutgoing: (XMPPMessage*)message
+{
+    NSString* fromStr = [[message attributeForName:@"from"] stringValue];
+    NSString* bareFrom = [[XMPPJID jidWithString:fromStr]bare];
+    if ([bareFrom isEqualToString:[[xmppStream myJID] bare]]) {
+        return YES;
+    }
+    return NO;
+}
+
 - (void) syncLocalMessageArchiveWithServerMessageArchive
 {
-    dispatch_block_t block = ^{ @autoreleasepool {
-        [self syncLocalMessageArchiveWithServerMessageArchiveWithBareJid:nil startTime:nil endTime:nil maxResultNumber:nil];
-    }};
-    
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_async(moduleQueue, block);
+    [self syncLocalMessageArchiveWithServerMessageArchiveWithBareJid:nil startTime:nil endTime:nil maxResultNumber:nil];
 }
 
 - (void) syncLocalMessageArchiveWithServerMessageArchiveWithBareJid: (NSString*)withBareJid startTime:(NSDate*)startTime endTime:(NSDate*)endTime maxResultNumber: (NSInteger*)maxResultNumber
 {
-    dispatch_block_t block = ^{ @autoreleasepool {
-        [self fetchArchivedMessagesWithBareJid:withBareJid startTime:startTime endTime:endTime maxResultNumber:maxResultNumber];
-    }};
-    
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_async(moduleQueue, block);
-    
+    [self fetchArchivedMessagesWithBareJid:withBareJid startTime:startTime endTime:endTime maxResultNumber:maxResultNumber];
 }
 
 - (void) fetchArchivedMessagesWithBareJid: (NSString*)withBareJid startTime:(NSDate*)startTime endTime:(NSDate*)endTime maxResultNumber: (NSInteger*)maxResultNumber
 {
-    dispatch_block_t block = ^{ @autoreleasepool {
-        
+    if (_syncState == XMPPMessageArchiveSyncStateNone) {
         XMPPLogTrace();
         
-//        <iq type='set' id='q29302'>
-//          <query xmlns='urn:xmpp:mam:1'>
-//            <x xmlns='jabber:x:data' type='submit'>
-//              <field var='FORM_TYPE' type='hidden'>
-//                <value>urn:xmpp:mam:1</value>
-//              </field>
-//              <field var='with'>
-//                <value>juliet@capulet.lit</value>
-//              </field>
-//              <field var='start'>
-//                <value>2010-08-07T00:00:00Z</value>
-//              </field>
-//              <field var='end'>
-//                <value>2010-07-07T13:23:54Z</value>
-//              </field>
-//            </x>
-//            <set xmlns='http://jabber.org/protocol/rsm'>
-//              <max>10</max>
-//            </set>
-//          </query>
-//        </iq>
+        //        <iq type='set' id='q29302'>
+        //          <query xmlns='urn:xmpp:mam:1'>
+        //            <x xmlns='jabber:x:data' type='submit'>
+        //              <field var='FORM_TYPE' type='hidden'>
+        //                <value>urn:xmpp:mam:1</value>
+        //              </field>
+        //              <field var='with'>
+        //                <value>juliet@capulet.lit</value>
+        //              </field>
+        //              <field var='start'>
+        //                <value>2010-08-07T00:00:00Z</value>
+        //              </field>
+        //              <field var='end'>
+        //                <value>2010-07-07T13:23:54Z</value>
+        //              </field>
+        //            </x>
+        //            <set xmlns='http://jabber.org/protocol/rsm'>
+        //              <max>10</max>
+        //            </set>
+        //          </query>
+        //        </iq>
         
         NSString* startTimeStr = @"";
         NSString* endTimeStr = @"";
@@ -279,7 +344,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         if (endTimeStr)  endTimeStr = [endTime xmppDateTimeString];
         if (maxResultNumberStr)  maxResultNumberStr = [NSString stringWithFormat:@"%ld",(long)maxResultNumber];
         
-        NSString *fetchID = [xmppStream generateUUID];
+        syncId = [xmppStream generateUUID];
         
         // creating x item
         NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:@"urn:xmpp:mam:1"];
@@ -319,7 +384,6 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         
         [query addChild:x];
         
-        //creating set otem
         if (maxResultNumber && maxResultNumber > 0) {
             NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
             NSXMLElement *max = [NSXMLElement elementWithName:@"value" stringValue:maxResultNumberStr];
@@ -327,34 +391,14 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
             [x addChild:set];
         }
         
-        XMPPIQ *iq = [XMPPIQ iqWithType:@"set" elementID:fetchID child:query];
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"set" elementID:syncId child:query];
         
         [xmppStream sendElement:iq];
         _syncState = XMPPMessageArchiveSyncStateWaitingForSyncResponse;
-        
-        [responseTracker addID:fetchID
-                        target:self
-                      selector:@selector(handleFetchArchivedMessageResponse:withInfo:)
-                       timeout:60.0];
-        
-    }};
-    
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_async(moduleQueue, block);
-    
-}
-
-- (void)handleFetchArchivedMessageResponse:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
-{
-    XMPPLogTrace();
-    
-    if ([[iq type] isEqualToString:@"result"])
-    {
     }
     else
     {
+        XMPPLogWarn(@"%@: Message syncing already in progress.", THIS_FILE);
     }
 }
 
