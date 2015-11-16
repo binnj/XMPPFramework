@@ -348,47 +348,50 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         
         // creating x item
         NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:@"urn:xmpp:mam:1"];
-        NSXMLElement *x = [NSXMLElement elementWithName:@"x" xmlns:@"jabber:x:data"];
-        [x addAttributeWithName:@"type" stringValue:@"submit"];
         
-        NSXMLElement *field = [NSXMLElement elementWithName:@"field"];
-        [field addAttributeWithName:@"var" stringValue:@"FORM_TYPE"];
-        [field addAttributeWithName:@"type" stringValue:@"hidden"];
-        
-        NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:@"urn:xmpp:mam:1"];
-        
-        [field addChild:value];
-        [x addChild:field];
-        
-        if (withBareJid && ![withBareJid isEqualToString:@""]) {
+        if (withBareJid || startTime || endTime) {
+            NSXMLElement *x = [NSXMLElement elementWithName:@"x" xmlns:@"jabber:x:data"];
+            [x addAttributeWithName:@"type" stringValue:@"submit"];
+            
             NSXMLElement *field = [NSXMLElement elementWithName:@"field"];
-            [field addAttributeWithName:@"var" stringValue:@"with"];
-            NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:withBareJid];
+            [field addAttributeWithName:@"var" stringValue:@"FORM_TYPE"];
+            [field addAttributeWithName:@"type" stringValue:@"hidden"];
+            
+            NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:@"urn:xmpp:mam:1"];
+            
             [field addChild:value];
             [x addChild:field];
-        }
-        if (startTimeStr && ![startTimeStr isEqualToString:@""]) {
-            NSXMLElement *field = [NSXMLElement elementWithName:@"field"];
-            [field addAttributeWithName:@"var" stringValue:@"start"];
-            NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:startTimeStr];
-            [field addChild:value];
-            [x addChild:field];
-        }
-        if (endTimeStr && ![endTimeStr isEqualToString:@""]) {
-            NSXMLElement *field = [NSXMLElement elementWithName:@"field"];
-            [field addAttributeWithName:@"var" stringValue:@"end"];
-            NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:endTimeStr];
-            [field addChild:value];
-            [x addChild:field];
-        }
-        
-        [query addChild:x];
-        
-        if (maxResultNumber && maxResultNumber > 0) {
-            NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
-            NSXMLElement *max = [NSXMLElement elementWithName:@"value" stringValue:maxResultNumberStr];
-            [set addChild:max];
-            [x addChild:set];
+            
+            if (withBareJid && ![withBareJid isEqualToString:@""]) {
+                NSXMLElement *field = [NSXMLElement elementWithName:@"field"];
+                [field addAttributeWithName:@"var" stringValue:@"with"];
+                NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:withBareJid];
+                [field addChild:value];
+                [x addChild:field];
+            }
+            if (startTimeStr && ![startTimeStr isEqualToString:@""]) {
+                NSXMLElement *field = [NSXMLElement elementWithName:@"field"];
+                [field addAttributeWithName:@"var" stringValue:@"start"];
+                NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:startTimeStr];
+                [field addChild:value];
+                [x addChild:field];
+            }
+            if (endTimeStr && ![endTimeStr isEqualToString:@""]) {
+                NSXMLElement *field = [NSXMLElement elementWithName:@"field"];
+                [field addAttributeWithName:@"var" stringValue:@"end"];
+                NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:endTimeStr];
+                [field addChild:value];
+                [x addChild:field];
+            }
+            
+            [query addChild:x];
+            
+            if (maxResultNumber && maxResultNumber > 0) {
+                NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
+                NSXMLElement *max = [NSXMLElement elementWithName:@"value" stringValue:maxResultNumberStr];
+                [set addChild:max];
+                [x addChild:set];
+            }
         }
         
         XMPPIQ *iq = [XMPPIQ iqWithType:@"set" elementID:syncId child:query];
