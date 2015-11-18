@@ -16,7 +16,7 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN; // | XMPP_LOG_FLAG_TRACE;
 static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 #endif
 
-#define XMLNS_XMPP_ARCHIVE @"urn:xmpp:mam:1"
+#define XMLNS_XMPP_ARCHIVE @"urn:xmpp:mam:0"
 
 // XMPP Incoming File Transfer State
 typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
@@ -211,13 +211,6 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         {
             [self setPreferences:pref];
         }
-        // Server returns the result IQ to signal the end
-        // <iq type='result' id='syncId'/>
-        else if (_syncState != XMPPMessageArchiveSyncStateNone && [[[iq attributeForName:@"id"] stringValue] isEqualToString:syncId])
-        {
-            //syncing completed
-            _syncState = XMPPMessageArchiveSyncStateNone;
-        }
     }
     return NO;
 }
@@ -230,6 +223,13 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     {
         XMPPMessage *messageToSync = [self messageToSyncFromServerResponseMessage:message];
         [xmppMessageArchivingStorage archiveMessage:messageToSync outgoing:[self isOutgoing:messageToSync] xmppStream:sender];
+    }
+}
+
+- (void)xmppStream:(XMPPStream *)sender didSendIQ:(XMPPIQ *)iq
+{
+    if ([[iq elementID] isEqualToString:syncId]) {
+        _syncState = XMPPMessageArchiveSyncStateWaitingForSyncResponse;
     }
 }
 
@@ -253,13 +253,28 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     //      </result>
     //    </message>
     
+    //    <message xmlns="jabber:client" from="juliet@capulet.lit" to="juliet@capulet.lit/chamber" id="aeb215">
+    //        <fin xmlns="urn:xmpp:mam:0" complete="true">
+    //            <set xmlns="http://jabber.org/protocol/rsm">
+    //                <first index="0">1</first>
+    //                <last>2</last>
+    //                <count>2</count>
+    //            </set>
+    //        </fin>
+    //        <no-copy xmlns="urn:xmpp:hints"/>
+    //    </message>
+    
     if (_syncState == XMPPMessageArchiveSyncStateWaitingForSyncResponse || _syncState == XMPPMessageArchiveSyncStateSyncing) {
         if ([message elementsForName:@"result"].count > 0) {
             NSXMLElement* result = [[message elementsForName:@"result"] firstObject];
-            if ([[[result attributeForName:@"xmlns"] stringValue] isEqualToString:XMLNS_XMPP_ARCHIVE]) {
+            if ([result xmlns] && [[result xmlns] isEqualToString:XMLNS_XMPP_ARCHIVE]) {
                 _syncState = XMPPMessageArchiveSyncStateSyncing;
                 return YES;
             }
+        }
+        else if ([message elementsForName:@"fin"] && [[[[message elementsForName:@"fin"] firstObject] xmlns] isEqualToString:XMLNS_XMPP_ARCHIVE])
+        {
+            _syncState = XMPPMessageArchiveSyncStateNone;
         }
     }
     return NO;
@@ -284,7 +299,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     NSXMLElement* result = [[message elementsForName:@"result"] firstObject];
     NSXMLElement* forwarded = [[result elementsForName:@"forwarded"] firstObject];
     NSXMLElement* delay = [[forwarded elementsForName:@"delay"] firstObject];
-    NSXMLElement* messageToSync = [[delay elementsForName:@"message"] firstObject];
+    NSXMLElement* messageToSync = [[forwarded elementsForName:@"message"] firstObject];
     [messageToSync addChild:delay.copy];
     XMPPMessage* msgToSync = [XMPPMessage messageFromElement:messageToSync];
     return msgToSync;
@@ -347,7 +362,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         syncId = [xmppStream generateUUID];
         
         // creating x item
-        NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:@"urn:xmpp:mam:1"];
+        NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:XMLNS_XMPP_ARCHIVE];
         
         if (withBareJid || startTime || endTime) {
             NSXMLElement *x = [NSXMLElement elementWithName:@"x" xmlns:@"jabber:x:data"];
@@ -395,9 +410,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         }
         
         XMPPIQ *iq = [XMPPIQ iqWithType:@"set" elementID:syncId child:query];
-        
         [xmppStream sendElement:iq];
-        _syncState = XMPPMessageArchiveSyncStateWaitingForSyncResponse;
     }
     else
     {
