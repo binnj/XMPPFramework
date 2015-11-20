@@ -19,51 +19,52 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 #define XMLNS_XMPP_HTTP_FILE_UPLOAD @"urn:xmpp:http:upload"
 NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
 
-// XMPP Incoming File Upload State
-typedef NS_ENUM(int, XMPPMessageUploadFileState) {
-    XMPPMessageUploadFileStateDiscoDiscoveryRequest,
-    XMPPMessageUploadFileStateFoundUploadService,
-    XMPPMessageUploadFileStateNotFoundUploadService,
-    XMPPMessageUploadFileStateUploadServiceDiscoDiscoveryService,
-    XMPPMessageUploadFileStateUploadServiceXMLNS
-};
+@class XMPPIDTracker;
 
 @interface XMPPHttpFileUpload()
 {
+    XMPPIDTracker *xmppIDTracker;
+    
     BOOL hasRequestedServices;
     BOOL hasRequestedUploadServices;
     BOOL hasRequestedSlot;
+    
+    NSString* requestedServiceId;
+    NSString* requestedUploadServiceId;
+    NSString* requestedSlotId;
+    
+    BOOL hasService;
     BOOL hasUploadService;
+    
     NSString* uploadServiceJid;
-    NSString* uploadFileName;
-    long uploadFileSize;
-    NSString* uploadContentType;
+    
+    XMPPHttpFileUploadObject* httpFileUploadObject;
 }
 @end
 
 @implementation XMPPHttpFileUpload
-@synthesize getURL;
-@synthesize putURL;
 
+- (id)init
+{
+    // This will cause a crash - it's designed to.
+    return [self initWithDispatchQueue:dispatch_get_main_queue()];
+}
 - (id)initWithDispatchQueue:(dispatch_queue_t)queue
 {
+    self = [super initWithDispatchQueue:queue];
     return self;
 }
 
 - (BOOL)activate:(XMPPStream *)aXmppStream
 {
+    XMPPLogTrace();
+    
     if ([super activate:aXmppStream])
     {
         XMPPLogVerbose(@"%@: Activated", THIS_FILE);
         
-        xmppIDTracker = [[XMPPIDTracker alloc] initWithStream:xmppStream
-                                                dispatchQueue:moduleQueue];
+        // Reserved for future potential use
         
-#ifdef _XMPP_CAPABILITIES_H
-        [xmppStream autoAddDelegate:self
-                      delegateQueue:moduleQueue
-                   toModulesOfClass:[XMPPCapabilities class]];
-#endif
         return YES;
     }
     
@@ -73,20 +74,7 @@ typedef NS_ENUM(int, XMPPMessageUploadFileState) {
 - (void)deactivate
 {
     XMPPLogTrace();
-    
-    dispatch_block_t block = ^{ @autoreleasepool {
-        [xmppIDTracker removeAllIDs];
-        xmppIDTracker = nil;
-    }};
-    
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_sync(moduleQueue, block);
-    
-#ifdef _XMPP_CAPABILITIES_H
-    [xmppStream removeAutoDelegate:self delegateQueue:moduleQueue fromModulesOfClass:[XMPPCapabilities class]];
-#endif
+    // Reserved for future potential use
     
     [super deactivate];
 }
@@ -95,24 +83,11 @@ typedef NS_ENUM(int, XMPPMessageUploadFileState) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark request for file upload permission
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)requestFileUpload:(NSString*)fileName fileSize:(long)fileSize contentType:(NSString*)contentType
+- (void) requestFileUpload:(NSString*)fileName fileSize:(long)fileSize contentType:(NSString*)contentType
 {
-    uploadFileName = fileName;
-    uploadFileSize = fileSize;
-    uploadContentType = contentType;
-    
-    
-    dispatch_block_t block = ^{ @autoreleasepool {
-        if (!hasRequestedServices) [self discoverServices];
-        else if (!hasRequestedUploadServices) [self discoverUploadService];
-        else [self requestSlotForFile:uploadFileName fileSize:uploadFileSize contentType:uploadContentType];
-        
-    }};
-    
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_async(moduleQueue, block);
+    if (!hasService) [self discoverServices];
+    else if (!hasUploadService) [self discoverUploadService];
+    else [self requestSlotForFile:fileName fileSize:fileSize contentType:contentType];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,41 +104,23 @@ typedef NS_ENUM(int, XMPPMessageUploadFileState) {
  */
 - (void)discoverServices
 {
-    // This is a public method, so it may be invoked on any thread/queue.
+    if (hasRequestedServices) return; // We've already requested services
     
-    dispatch_block_t block = ^{ @autoreleasepool {
-        if (hasRequestedServices) return; // We've already requested services
-        
-        NSString *toStr = xmppStream.myJID.domain;
-        NSXMLElement *query = [NSXMLElement elementWithName:@"query"
-                                                      xmlns:XMPPDiscoItemsNamespace];
-        XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
-                                     to:[XMPPJID jidWithString:toStr]
-                              elementID:[xmppStream generateUUID]
-                                  child:query];
-        
-        [xmppIDTracker addElement:iq
-                           target:self
-                         selector:@selector(handleDiscoverServicesQueryIQ:withInfo:)
-                          timeout:60];
-        
-        [xmppStream sendElement:iq];
-        hasRequestedServices = YES;
-    }};
+    NSString *toStr = xmppStream.myJID.domain;
+    requestedServiceId = [xmppStream generateUUID];
+    NSXMLElement *query = [NSXMLElement elementWithName:@"query"
+                                                  xmlns:XMPPDiscoItemsNamespace];
+    XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
+                                 to:[XMPPJID jidWithString:toStr]
+                          elementID:requestedServiceId
+                              child:query];
     
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_async(moduleQueue, block);
+    [xmppStream sendElement:iq];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark Server replies to service discovery request
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
- * This method handles the response received (or not received) after calling discoverServices.
- */
 
 //<iq from='montague.tld'
 //    id='step_01'
@@ -173,40 +130,34 @@ typedef NS_ENUM(int, XMPPMessageUploadFileState) {
 //    <item jid='conference.montague.tld' name='Chatroom Service' />
 //  </query>
 //</iq>
-- (void)handleDiscoverServicesQueryIQ:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
+- (void)handleDiscoverServicesQueryIQ:(XMPPIQ *)iq
 {
-    dispatch_block_t block = ^{ @autoreleasepool {
-        NSXMLElement *errorElem = [iq elementForName:@"error"];
-        
-        if (errorElem) {
-            NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
-            NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
-            NSError *error = [NSError errorWithDomain:XMPPFileUploadErrorDomain
-                                                 code:[errorElem attributeIntegerValueForName:@"code"
-                                                                             withDefaultValue:0]
-                                             userInfo:dict];
-            //what to do in case of error?
-            return;
-        }
-        
-        NSXMLElement *query = [iq elementForName:@"query"
-                                           xmlns:XMPPDiscoItemsNamespace];
-        
-        NSArray *items = [query elementsForName:@"item"];
-        for (NSXMLElement* item in items){
-            if ([[item name] isEqualToString:@"HTTP File Upload"]) {
-                uploadServiceJid = [[item attributeForName:@"jid"] stringValue];
-                [self discoverUploadService];
-                break;
-            }
-        }
-        hasRequestedServices = NO; // Set this back to NO to allow for future requests
-    }};
+    NSXMLElement *errorElem = [iq elementForName:@"error"];
+    hasRequestedServices = NO; // Set this back to NO to allow for future requests
     
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_async(moduleQueue, block);
+    if (errorElem) {
+        NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
+        NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
+        NSError *error = [NSError errorWithDomain:XMPPFileUploadErrorDomain
+                                             code:[errorElem attributeIntegerValueForName:@"code"
+                                                                         withDefaultValue:0]
+                                         userInfo:dict];
+        //what to do in case of error?
+        return;
+    }
+    
+    NSXMLElement *query = [iq elementForName:@"query"
+                                       xmlns:XMPPDiscoItemsNamespace];
+    
+    NSArray *items = [query elementsForName:@"item"];
+    for (NSXMLElement* item in items){
+        if ([[[item attributeForName:@"jid"] stringValue] isEqualToString:[NSString stringWithFormat:@"upload.%@",xmppStream.hostName]]) {
+            uploadServiceJid = [[item attributeForName:@"jid"] stringValue];
+            hasService = YES;
+            [self discoverUploadService];
+            break;
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -223,41 +174,23 @@ typedef NS_ENUM(int, XMPPMessageUploadFileState) {
  */
 - (void)discoverUploadService
 {
-    // This is a public method, so it may be invoked on any thread/queue.
+    if (hasRequestedUploadServices) return; // We've already requested services
     
-    dispatch_block_t block = ^{ @autoreleasepool {
-        if (hasRequestedUploadServices) return; // We've already requested services
-        
-        NSString *toStr = uploadServiceJid;
-        NSXMLElement *query = [NSXMLElement elementWithName:@"query"
-                                                      xmlns:XMPPDiscoItemsNamespace];
-        XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
-                                     to:[XMPPJID jidWithString:toStr]
-                              elementID:[xmppStream generateUUID]
-                                  child:query];
-        
-        [xmppIDTracker addElement:iq
-                           target:self
-                         selector:@selector(handleDiscoverUploadServicesQueryIQ:withInfo:)
-                          timeout:60];
-        
-        [xmppStream sendElement:iq];
-        hasRequestedUploadServices = YES;
-    }};
+    NSString *toStr = uploadServiceJid;
+    requestedUploadServiceId = [xmppStream generateUUID];
+    NSXMLElement *query = [NSXMLElement elementWithName:@"query"
+                                                  xmlns:XMPPDiscoItemsNamespace];
+    XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
+                                 to:[XMPPJID jidWithString:toStr]
+                          elementID:requestedUploadServiceId
+                              child:query];
     
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_async(moduleQueue, block);
+    [xmppStream sendElement:iq];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark Upload service replies to service discovery request
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
- * This method handles the response received (or not received) after calling discoverServices.
- */
 
 /*
  *    <iq from='upload.montague.tld
@@ -272,38 +205,32 @@ typedef NS_ENUM(int, XMPPMessageUploadFileState) {
  *      </query>
  *    </iq>
  */
-- (void)handleDiscoverUploadServicesQueryIQ:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
+- (void)handleDiscoverUploadServicesQueryIQ:(XMPPIQ *)iq
 {
-    dispatch_block_t block = ^{ @autoreleasepool {
-        NSXMLElement *errorElem = [iq elementForName:@"error"];
-        
-        if (errorElem) {
-            NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
-            NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
-            NSError *error = [NSError errorWithDomain:XMPPFileUploadErrorDomain
-                                                 code:[errorElem attributeIntegerValueForName:@"code"
-                                                                             withDefaultValue:0]
-                                             userInfo:dict];
-            //what to do in case of error?
-            return;
-        }
-        
-        NSXMLElement *query = [iq elementForName:@"query"
-                                           xmlns:XMPPDiscoItemsNamespace];
-        
-        NSArray *features = [query elementsForName:@"feature"];
-        for (NSXMLElement* feature in features){
-            if ([XMLNS_XMPP_HTTP_FILE_UPLOAD isEqualToString:[[feature attributeForName:@"var"] stringValue]]) {
-                [self requestSlotForFile:uploadFileName fileSize:uploadFileSize contentType:uploadContentType];
-            }
-        }
-        hasRequestedUploadServices = NO; // Set this back to NO to allow for future requests
-    }};
+    NSXMLElement *errorElem = [iq elementForName:@"error"];
+    hasRequestedUploadServices = NO; // Set this back to NO to allow for future requests
     
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_async(moduleQueue, block);
+    if (errorElem) {
+        NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
+        NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
+        NSError *error = [NSError errorWithDomain:XMPPFileUploadErrorDomain
+                                             code:[errorElem attributeIntegerValueForName:@"code"
+                                                                         withDefaultValue:0]
+                                         userInfo:dict];
+        //what to do in case of error?
+        return;
+    }
+    
+    NSXMLElement *query = [iq elementForName:@"query"
+                                       xmlns:XMPPDiscoItemsNamespace];
+    
+    NSArray *features = [query elementsForName:@"feature"];
+    for (NSXMLElement* feature in features){
+        if ([XMLNS_XMPP_HTTP_FILE_UPLOAD isEqualToString:[[feature attributeForName:@"var"] stringValue]]) {
+            [self requestSlotForFile:httpFileUploadObject.fileName fileSize:httpFileUploadObject.fileSize contentType:httpFileUploadObject.contentType];
+            hasUploadService = YES;
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -327,46 +254,36 @@ typedef NS_ENUM(int, XMPPMessageUploadFileState) {
 {
     // This is a public method, so it may be invoked on any thread/queue.
     
-    dispatch_block_t block = ^{ @autoreleasepool {
-        
-        NSString *toStr = uploadServiceJid;
-        NSXMLElement *query = [NSXMLElement elementWithName:@"query"
-                                                      xmlns:XMPPDiscoItemsNamespace];
-        XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
-                                     to:[XMPPJID jidWithString:toStr]
-                              elementID:[xmppStream generateUUID]
-                                  child:query];
-        NSXMLElement* request = [NSXMLElement elementWithName:@"request" xmlns:XMLNS_XMPP_HTTP_FILE_UPLOAD];
-        NSXMLElement* filename = [NSXMLElement elementWithName:@"filename" stringValue:fileName];
-        NSXMLElement* filesize = [NSXMLElement elementWithName:@"size" stringValue:[NSString stringWithFormat:@"%ld",fileSize]];
-        NSXMLElement* contenttype = [NSXMLElement elementWithName:@"content-type" stringValue:contentType];
-        [request addChild:filename];
-        [request addChild:filesize];
-        [request addChild:contenttype];
-        
-        [iq addChild:request];
-        
-        [xmppIDTracker addElement:iq
-                           target:self
-                         selector:@selector(handleSlotRequestQueryIQ:withInfo:)
-                          timeout:60];
-        
-        [xmppStream sendElement:iq];
-    }};
+    httpFileUploadObject = [[XMPPHttpFileUploadObject alloc]init];
+    httpFileUploadObject.fileName = fileName;
+    httpFileUploadObject.fileSize = fileSize;
+    httpFileUploadObject.contentType = contentType;
     
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_async(moduleQueue, block);
+    NSString *toStr = uploadServiceJid;
+    requestedSlotId = [xmppStream generateUUID];
+    NSXMLElement *query = [NSXMLElement elementWithName:@"query"
+                                                  xmlns:XMPPDiscoItemsNamespace];
+    XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
+                                 to:[XMPPJID jidWithString:toStr]
+                          elementID:[xmppStream generateUUID]
+                              child:query];
+    
+    NSXMLElement* request = [NSXMLElement elementWithName:@"request" xmlns:XMLNS_XMPP_HTTP_FILE_UPLOAD];
+    NSXMLElement* filename = [NSXMLElement elementWithName:@"filename" stringValue:fileName];
+    NSXMLElement* filesize = [NSXMLElement elementWithName:@"size" stringValue:[NSString stringWithFormat:@"%ld",fileSize]];
+    NSXMLElement* contenttype = [NSXMLElement elementWithName:@"content-type" stringValue:contentType];
+    [request addChild:filename];
+    [request addChild:filesize];
+    [request addChild:contenttype];
+    
+    [iq addChild:request];
+    
+    [xmppStream sendElement:iq];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark The upload service responsd with a slot
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
- * This method handles the response received (or not received) after calling discoverServices.
- */
 
 /*
  *    <iq from='upload.montague.tld
@@ -379,39 +296,69 @@ typedef NS_ENUM(int, XMPPMessageUploadFileState) {
  *     </slot>
  *    </iq>
  */
-- (void)handleSlotRequestQueryIQ:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
+- (void)handleSlotRequestQueryIQ:(XMPPIQ *)iq
 {
-    dispatch_block_t block = ^{ @autoreleasepool {
-        NSXMLElement *errorElem = [iq elementForName:@"error"];
-        
-        if (errorElem) {
-            NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
-            NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
-            NSError *error = [NSError errorWithDomain:XMPPFileUploadErrorDomain
-                                                 code:[errorElem attributeIntegerValueForName:@"code"
-                                                                             withDefaultValue:0]
-                                             userInfo:dict];
-            //what to do in case of error?
-            return;
-        }
-        
-        NSXMLElement *slot = [iq elementForName:@"slot" xmlns:XMLNS_XMPP_HTTP_FILE_UPLOAD];
-        
-        NSString* getURLStr;
-        NSString* putURLStr;
-        
-        for (NSXMLElement* child in [slot children]) {
-            if ([[child name] isEqualToString:@"put"]) putURLStr = [child stringValue];
-            if ([[child name] isEqualToString:@"get"]) getURLStr = [child stringValue];
-        }
-        if (putURLStr) putURL = [NSURL URLWithString:putURLStr];
-        if (getURLStr) getURL = [NSURL URLWithString:getURLStr];
-    }};
+    NSXMLElement *errorElem = [iq elementForName:@"error"];
     
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_async(moduleQueue, block);
+    if (errorElem) {
+        NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
+        NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
+        NSError *error = [NSError errorWithDomain:XMPPFileUploadErrorDomain
+                                             code:[errorElem attributeIntegerValueForName:@"code"
+                                                                         withDefaultValue:0]
+                                         userInfo:dict];
+        //what to do in case of error?
+        return;
+    }
+    
+    NSXMLElement *slot = [iq elementForName:@"slot" xmlns:XMLNS_XMPP_HTTP_FILE_UPLOAD];
+    
+    NSString* getURLStr;
+    NSString* putURLStr;
+    
+    for (NSXMLElement* child in [slot children]) {
+        if ([[child name] isEqualToString:@"put"]) putURLStr = [child stringValue];
+        if ([[child name] isEqualToString:@"get"]) getURLStr = [child stringValue];
+    }
+    
+    if (putURLStr) httpFileUploadObject.putURL = [NSURL URLWithString:putURLStr];
+    if (getURLStr) httpFileUploadObject.getURL = [NSURL URLWithString:getURLStr];
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark XMPPStream Delegate
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+- (BOOL)xmppStream:(XMPPStream *)sender didReceiveIQ:(XMPPIQ *)iq
+{
+    if ([[iq elementID] isEqualToString:requestedServiceId]) {
+        [self handleDiscoverServicesQueryIQ:iq];
+        return YES;
+    }
+    else if ([[iq elementID] isEqualToString:requestedUploadServiceId]) {
+        [self handleDiscoverUploadServicesQueryIQ:iq];
+        return YES;
+    }
+    else if ([[iq elementID] isEqualToString:requestedSlotId]) {
+        [self handleSlotRequestQueryIQ:iq];
+        return YES;
+    }
+    
+    return NO;
+}
+
+- (void)xmppStream:(XMPPStream *)sender didSendIQ:(XMPPIQ *)iq
+{
+    if ([[iq elementID] isEqualToString:requestedServiceId]) {
+        hasRequestedServices = YES;
+    }
+    else if ([[iq elementID] isEqualToString:requestedUploadServiceId]) {
+        hasRequestedUploadServices = YES;
+    }
+    else if ([[iq elementID] isEqualToString:requestedSlotId]) {
+        hasRequestedSlot = YES;
+    }
 }
 
 @end
