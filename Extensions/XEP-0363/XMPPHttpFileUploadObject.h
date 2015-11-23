@@ -10,6 +10,7 @@
 
 @interface XMPPHttpFileUploadObject : NSObject
 
+@property (nonatomic,strong) NSString* recipientJid;
 @property (nonatomic,strong) NSString* fileName;
 @property (nonatomic) long fileSize;
 @property (nonatomic,strong) NSData* fileData;
