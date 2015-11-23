@@ -7,7 +7,6 @@
 //
 
 #import "XMPP.h"
-#import "XMPPIDTracker.h"
 #import "XMPPHttpFileUploadObject.h"
 
 /**
@@ -34,5 +33,6 @@
 @optional
 
 - (void)xmppHttpFileUpload:(XMPPHttpFileUpload *)sender  didReceiveURL: (XMPPHttpFileUploadObject*)httpFileUploadObj;
+- (void)xmppHttpFileUpload:(XMPPHttpFileUpload *)sender  didNotReceiveURL: (XMPPHttpFileUploadObject*)httpFileUploadObj withError: (NSError*)error;
 
 @end

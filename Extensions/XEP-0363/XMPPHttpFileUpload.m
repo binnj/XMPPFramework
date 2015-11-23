@@ -158,9 +158,8 @@ typedef NS_ENUM(int, XMPPHttpFileUploadStatus) {
                                              code:[errorElem attributeIntegerValueForName:@"code"
                                                                          withDefaultValue:0]
                                          userInfo:dict];
-        //what to do in case of error?
         httpFileUploadObject.status = XMPPHttpFileUploadStatusNoService;
-        [httpFileUploadObjs removeObjectForKey:[iq elementID]];
+        [multicastDelegate xmppHttpFileUpload:self didNotReceiveURL:httpFileUploadObject withError:error];
         return;
     }
     
@@ -240,9 +239,9 @@ typedef NS_ENUM(int, XMPPHttpFileUploadStatus) {
                                              code:[errorElem attributeIntegerValueForName:@"code"
                                                                          withDefaultValue:0]
                                          userInfo:dict];
-        //what to do in case of error?
         httpFileUploadObject.status = XMPPHttpFileUploadStatusNoUploadService;
         [httpFileUploadObjs removeObjectForKey:[iq elementID]];
+        [multicastDelegate xmppHttpFileUpload:self didNotReceiveURL:httpFileUploadObject withError:error];
         return;
     }
     
@@ -330,9 +329,9 @@ typedef NS_ENUM(int, XMPPHttpFileUploadStatus) {
                                              code:[errorElem attributeIntegerValueForName:@"code"
                                                                          withDefaultValue:0]
                                          userInfo:dict];
-        //what to do in case of error?
         httpFileUploadObject.status = XMPPHttpFileUploadStatusNoUploadSlot;
         [httpFileUploadObjs removeObjectForKey:[iq elementID]];
+        [multicastDelegate xmppHttpFileUpload:self didNotReceiveURL:httpFileUploadObject withError:error];
         return;
     }
     
