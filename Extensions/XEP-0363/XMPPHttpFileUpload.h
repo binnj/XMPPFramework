@@ -22,6 +22,17 @@
  * @see xmppMUC:didDiscoverServices:
  * @see xmppMUCFailedToDiscoverServices:withError:
  */
-- (void)requestFileUpload:(NSString*)fileName fileSize:(long)fileSize contentType:(NSString*)contentType;
+- (void)requestFileUpload:(XMPPHttpFileUploadObject*) httpFileUploadObject;
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - XMPP Http File Upload Delegate
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@protocol XMPPHttpFileUploadDelegate
+@optional
+
+- (void)xmppHttpFileUpload:(XMPPHttpFileUpload *)sender  didReceiveURL: (XMPPHttpFileUploadObject*)httpFileUploadObj;
 
 @end

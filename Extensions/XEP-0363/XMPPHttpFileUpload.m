@@ -19,30 +19,40 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 #define XMLNS_XMPP_HTTP_FILE_UPLOAD @"urn:xmpp:http:upload"
 NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
 
+// XMPP Incoming File Upload State
+typedef NS_ENUM(int, XMPPHttpFileUploadStatus) {
+    XMPPHttpFileUploadStatusNone,
+    XMPPHttpFileUploadStatusServiceRequestedSent,
+    XMPPHttpFileUploadStatusServiceRequested,
+    XMPPHttpFileUploadStatusHasService,
+    XMPPHttpFileUploadStatusNoService,
+    XMPPHttpFileUploadStatusUploadServiceRequestedSent,
+    XMPPHttpFileUploadStatusUploadServiceRequested,
+    XMPPHttpFileUploadStatusHasUploadService,
+    XMPPHttpFileUploadStatusNoUploadService,
+    XMPPHttpFileUploadStatusUploadSlotRequestedSent,
+    XMPPHttpFileUploadStatusUploadSlotRequested,
+    XMPPHttpFileUploadStatusNoUploadSlot,
+    XMPPHttpFileUploadStatusCompleted
+};
+
 @class XMPPIDTracker;
 
 @interface XMPPHttpFileUpload()
 {
     XMPPIDTracker *xmppIDTracker;
     
-    BOOL hasRequestedServices;
-    BOOL hasRequestedUploadServices;
-    BOOL hasRequestedSlot;
-    
-    NSString* requestedServiceId;
-    NSString* requestedUploadServiceId;
-    NSString* requestedSlotId;
-    
     BOOL hasService;
     BOOL hasUploadService;
     
     NSString* uploadServiceJid;
-    
-    XMPPHttpFileUploadObject* httpFileUploadObject;
 }
+@property (nonatomic, strong) NSMutableDictionary* httpFileUploadObjs;
+
 @end
 
 @implementation XMPPHttpFileUpload
+@synthesize httpFileUploadObjs;
 
 - (id)init
 {
@@ -51,6 +61,7 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
 }
 - (id)initWithDispatchQueue:(dispatch_queue_t)queue
 {
+    httpFileUploadObjs = [[NSMutableDictionary alloc]init];
     self = [super initWithDispatchQueue:queue];
     return self;
 }
@@ -79,15 +90,18 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
     [super deactivate];
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark request for file upload permission
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-- (void) requestFileUpload:(NSString*)fileName fileSize:(long)fileSize contentType:(NSString*)contentType
+- (void) requestFileUpload:(XMPPHttpFileUploadObject*) httpFileUploadObject
 {
-    if (!hasService) [self discoverServices];
-    else if (!hasUploadService) [self discoverUploadService];
-    else [self requestSlotForFile:fileName fileSize:fileSize contentType:contentType];
+    NSString* requestedId = [xmppStream generateUUID];
+    httpFileUploadObjs [requestedId] = httpFileUploadObject;
+    httpFileUploadObject.status = XMPPHttpFileUploadStatusNone;
+    
+    if (!hasService) [self discoverServices:requestedId];
+//    else if (!hasUploadService) [self discoverUploadService:requestedId];
+    else [self requestSlotForFile:requestedId];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,17 +116,19 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
  *   <query xmlns='http://jabber.org/protocol/disco#items'/>
  * </iq>
  */
-- (void)discoverServices
+- (void)discoverServices: (NSString*) requestId
 {
-    if (hasRequestedServices) return; // We've already requested services
+    XMPPHttpFileUploadObject* httpFileUploadObject = httpFileUploadObjs [requestId];
+    if (httpFileUploadObject.status == XMPPHttpFileUploadStatusServiceRequestedSent || httpFileUploadObject.status == XMPPHttpFileUploadStatusServiceRequested) return;
+    
+    httpFileUploadObject.status = XMPPHttpFileUploadStatusServiceRequestedSent;
     
     NSString *toStr = xmppStream.myJID.domain;
-    requestedServiceId = [xmppStream generateUUID];
     NSXMLElement *query = [NSXMLElement elementWithName:@"query"
                                                   xmlns:XMPPDiscoItemsNamespace];
     XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
                                  to:[XMPPJID jidWithString:toStr]
-                          elementID:requestedServiceId
+                          elementID:requestId
                               child:query];
     
     [xmppStream sendElement:iq];
@@ -133,7 +149,7 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
 - (void)handleDiscoverServicesQueryIQ:(XMPPIQ *)iq
 {
     NSXMLElement *errorElem = [iq elementForName:@"error"];
-    hasRequestedServices = NO; // Set this back to NO to allow for future requests
+    XMPPHttpFileUploadObject* httpFileUploadObject = httpFileUploadObjs [[iq elementID]];
     
     if (errorElem) {
         NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -143,6 +159,8 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
                                                                          withDefaultValue:0]
                                          userInfo:dict];
         //what to do in case of error?
+        httpFileUploadObject.status = XMPPHttpFileUploadStatusNoService;
+        [httpFileUploadObjs removeObjectForKey:[iq elementID]];
         return;
     }
     
@@ -154,7 +172,9 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
         if ([[[item attributeForName:@"jid"] stringValue] isEqualToString:[NSString stringWithFormat:@"upload.%@",xmppStream.hostName]]) {
             uploadServiceJid = [[item attributeForName:@"jid"] stringValue];
             hasService = YES;
-            [self discoverUploadService];
+            httpFileUploadObject.status = XMPPHttpFileUploadStatusHasService;
+            //[self discoverUploadService:[iq elementID]];
+            [self requestSlotForFile:[iq elementID]];
             break;
         }
     }
@@ -172,20 +192,23 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
  *   <query xmlns='http://jabber.org/protocol/disco#info'/>
  * </iq>
  */
-- (void)discoverUploadService
+- (void)discoverUploadService: (NSString*) requestId
 {
-    if (hasRequestedUploadServices) return; // We've already requested services
+    XMPPHttpFileUploadObject* httpFileUploadObject = httpFileUploadObjs [requestId];
+    if (httpFileUploadObject.status == XMPPHttpFileUploadStatusUploadServiceRequestedSent || httpFileUploadObject.status == XMPPHttpFileUploadStatusUploadServiceRequested) return;
+    
+    httpFileUploadObject.status = XMPPHttpFileUploadStatusUploadServiceRequestedSent;
     
     NSString *toStr = uploadServiceJid;
-    requestedUploadServiceId = [xmppStream generateUUID];
     NSXMLElement *query = [NSXMLElement elementWithName:@"query"
                                                   xmlns:XMPPDiscoItemsNamespace];
     XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
                                  to:[XMPPJID jidWithString:toStr]
-                          elementID:requestedUploadServiceId
+                          elementID:requestId
                               child:query];
     
     [xmppStream sendElement:iq];
+    
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -208,7 +231,7 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
 - (void)handleDiscoverUploadServicesQueryIQ:(XMPPIQ *)iq
 {
     NSXMLElement *errorElem = [iq elementForName:@"error"];
-    hasRequestedUploadServices = NO; // Set this back to NO to allow for future requests
+    XMPPHttpFileUploadObject* httpFileUploadObject = httpFileUploadObjs [[iq elementID]];
     
     if (errorElem) {
         NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -218,6 +241,8 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
                                                                          withDefaultValue:0]
                                          userInfo:dict];
         //what to do in case of error?
+        httpFileUploadObject.status = XMPPHttpFileUploadStatusNoUploadService;
+        [httpFileUploadObjs removeObjectForKey:[iq elementID]];
         return;
     }
     
@@ -227,8 +252,9 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
     NSArray *features = [query elementsForName:@"feature"];
     for (NSXMLElement* feature in features){
         if ([XMLNS_XMPP_HTTP_FILE_UPLOAD isEqualToString:[[feature attributeForName:@"var"] stringValue]]) {
-            [self requestSlotForFile:httpFileUploadObject.fileName fileSize:httpFileUploadObject.fileSize contentType:httpFileUploadObject.contentType];
+            [self requestSlotForFile:[iq elementID]];
             hasUploadService = YES;
+            httpFileUploadObject.status = XMPPHttpFileUploadStatusHasUploadService;
         }
     }
 }
@@ -250,33 +276,28 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
  *   </request>
  * </iq>
  */
-- (void)requestSlotForFile:(NSString*)fileName fileSize:(long)fileSize contentType:(NSString*)contentType
+- (void)requestSlotForFile: (NSString*) requestId
 {
-    // This is a public method, so it may be invoked on any thread/queue.
+    XMPPHttpFileUploadObject* httpFileUploadObject = httpFileUploadObjs [requestId];
+    if (httpFileUploadObject.status == XMPPHttpFileUploadStatusUploadSlotRequestedSent || httpFileUploadObject.status == XMPPHttpFileUploadStatusUploadSlotRequested) return;
     
-    httpFileUploadObject = [[XMPPHttpFileUploadObject alloc]init];
-    httpFileUploadObject.fileName = fileName;
-    httpFileUploadObject.fileSize = fileSize;
-    httpFileUploadObject.contentType = contentType;
+    httpFileUploadObject.status = XMPPHttpFileUploadStatusUploadSlotRequestedSent;
+    
+    XMPPHttpFileUploadObject* httpFileUploadObj = httpFileUploadObjs [requestId];
     
     NSString *toStr = uploadServiceJid;
-    requestedSlotId = [xmppStream generateUUID];
-    NSXMLElement *query = [NSXMLElement elementWithName:@"query"
-                                                  xmlns:XMPPDiscoItemsNamespace];
-    XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
-                                 to:[XMPPJID jidWithString:toStr]
-                          elementID:[xmppStream generateUUID]
-                              child:query];
-    
     NSXMLElement* request = [NSXMLElement elementWithName:@"request" xmlns:XMLNS_XMPP_HTTP_FILE_UPLOAD];
-    NSXMLElement* filename = [NSXMLElement elementWithName:@"filename" stringValue:fileName];
-    NSXMLElement* filesize = [NSXMLElement elementWithName:@"size" stringValue:[NSString stringWithFormat:@"%ld",fileSize]];
-    NSXMLElement* contenttype = [NSXMLElement elementWithName:@"content-type" stringValue:contentType];
+    NSXMLElement* filename = [NSXMLElement elementWithName:@"filename" stringValue:httpFileUploadObj.fileName];
+    NSXMLElement* filesize = [NSXMLElement elementWithName:@"size" stringValue:[NSString stringWithFormat:@"%ld",httpFileUploadObj.fileSize]];
+    NSXMLElement* contenttype = [NSXMLElement elementWithName:@"content-type" stringValue:httpFileUploadObj.contentType];
     [request addChild:filename];
     [request addChild:filesize];
     [request addChild:contenttype];
     
-    [iq addChild:request];
+    XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
+                                 to:[XMPPJID jidWithString:toStr]
+                          elementID:requestId
+                              child:request];
     
     [xmppStream sendElement:iq];
 }
@@ -300,6 +321,8 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
 {
     NSXMLElement *errorElem = [iq elementForName:@"error"];
     
+    XMPPHttpFileUploadObject* httpFileUploadObject = httpFileUploadObjs [[iq elementID]];
+    
     if (errorElem) {
         NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
         NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
@@ -308,6 +331,8 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
                                                                          withDefaultValue:0]
                                          userInfo:dict];
         //what to do in case of error?
+        httpFileUploadObject.status = XMPPHttpFileUploadStatusNoUploadSlot;
+        [httpFileUploadObjs removeObjectForKey:[iq elementID]];
         return;
     }
     
@@ -321,8 +346,12 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
         if ([[child name] isEqualToString:@"get"]) getURLStr = [child stringValue];
     }
     
-    if (putURLStr) httpFileUploadObject.putURL = [NSURL URLWithString:putURLStr];
-    if (getURLStr) httpFileUploadObject.getURL = [NSURL URLWithString:getURLStr];
+    httpFileUploadObject.status = XMPPHttpFileUploadStatusCompleted;
+    [httpFileUploadObjs removeObjectForKey:[iq elementID]];
+    httpFileUploadObject.putURL = [NSURL URLWithString:putURLStr];
+    httpFileUploadObject.getURL = [NSURL URLWithString:getURLStr];
+    
+    [multicastDelegate xmppHttpFileUpload:self didReceiveURL: httpFileUploadObject];
 }
 
 
@@ -332,17 +361,23 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
 
 - (BOOL)xmppStream:(XMPPStream *)sender didReceiveIQ:(XMPPIQ *)iq
 {
-    if ([[iq elementID] isEqualToString:requestedServiceId]) {
-        [self handleDiscoverServicesQueryIQ:iq];
-        return YES;
-    }
-    else if ([[iq elementID] isEqualToString:requestedUploadServiceId]) {
-        [self handleDiscoverUploadServicesQueryIQ:iq];
-        return YES;
-    }
-    else if ([[iq elementID] isEqualToString:requestedSlotId]) {
-        [self handleSlotRequestQueryIQ:iq];
-        return YES;
+    if (httpFileUploadObjs[[iq elementID]]) {
+        
+        XMPPHttpFileUploadObject* httpFileUploadObject = httpFileUploadObjs [[iq elementID]];
+        if (httpFileUploadObject.status == XMPPHttpFileUploadStatusServiceRequested) {
+            [self handleDiscoverServicesQueryIQ:iq];
+            return YES;
+        }
+        else if (httpFileUploadObject.status == XMPPHttpFileUploadStatusUploadServiceRequested)
+        {
+            [self handleDiscoverUploadServicesQueryIQ:iq];
+            return YES;
+        }
+        else if (httpFileUploadObject.status == XMPPHttpFileUploadStatusUploadSlotRequested)
+        {
+            [self handleSlotRequestQueryIQ:iq];
+            return YES;
+        }
     }
     
     return NO;
@@ -350,14 +385,18 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
 
 - (void)xmppStream:(XMPPStream *)sender didSendIQ:(XMPPIQ *)iq
 {
-    if ([[iq elementID] isEqualToString:requestedServiceId]) {
-        hasRequestedServices = YES;
-    }
-    else if ([[iq elementID] isEqualToString:requestedUploadServiceId]) {
-        hasRequestedUploadServices = YES;
-    }
-    else if ([[iq elementID] isEqualToString:requestedSlotId]) {
-        hasRequestedSlot = YES;
+    if (httpFileUploadObjs[[iq elementID]]) {
+        XMPPHttpFileUploadObject* httpFileUploadObject = httpFileUploadObjs [[iq elementID]];
+        
+        if (httpFileUploadObject.status == XMPPHttpFileUploadStatusServiceRequestedSent) {
+            httpFileUploadObject.status = XMPPHttpFileUploadStatusServiceRequested;
+        }
+        else if (httpFileUploadObject.status == XMPPHttpFileUploadStatusUploadServiceRequestedSent){
+            httpFileUploadObject.status = XMPPHttpFileUploadStatusUploadServiceRequested;
+        }
+        else if (httpFileUploadObject.status == XMPPHttpFileUploadStatusUploadSlotRequestedSent){
+            httpFileUploadObject.status = XMPPHttpFileUploadStatusUploadSlotRequested;
+        }
     }
 }
 
