@@ -16,7 +16,7 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN; // | XMPP_LOG_FLAG_TRACE;
 static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 #endif
 
-#define XMLNS_XMPP_ARCHIVE @"urn:xmpp:mam:0"
+#define XMLNS_XMPP_ARCHIVE @"urn:xmpp:mam:1"
 
 // XMPP Incoming File Transfer State
 typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
@@ -207,9 +207,13 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     if ([type isEqualToString:@"result"])
     {
         NSXMLElement *pref = [iq elementForName:@"prefs" xmlns:XMLNS_XMPP_ARCHIVE];
+        NSXMLElement *fin = [iq elementForName:@"fin" xmlns:XMLNS_XMPP_ARCHIVE];
         if (pref)
         {
             [self setPreferences:pref];
+        }
+        if (fin) {
+            _syncState = XMPPMessageArchiveSyncStateNone;
         }
     }
     return NO;
@@ -218,7 +222,6 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
 - (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message
 {
     XMPPLogTrace();
-    
     if ([self shouldArchiveMessage:message xmppStream:sender])
     {
         XMPPMessage *messageToSync = [self messageToSyncFromServerResponseMessage:message];
