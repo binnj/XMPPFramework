@@ -192,14 +192,14 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
 	return result;
 }
 
-- (BOOL)isMessageWithId:(NSString *)messageId managedObjectContext:(NSManagedObjectContext *)moc
+- (BOOL)isMessageWithId:(NSString *)messageId managedObjectContext:(NSManagedObjectContext *)moc xmppStream:(XMPPStream *)xmppStream
 {
     if ([messageId isEqualToString:@""]) return NO;
     
     NSEntityDescription *messageEntity = [self messageEntity:moc];
     
-    NSString *predicateFrmt = @"messageId == %@";
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:predicateFrmt,messageId];
+    NSString *predicateFrmt = @"messageId == %@ AND streamBareJidStr=%@";
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:predicateFrmt,messageId,xmppStream.myJID.bare];
     
     NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"timestamp" ascending:NO];
     
@@ -399,7 +399,7 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
 		XMPPJID *messageJid = isOutgoing ? [message to] : [message from];
         
         // insert only if messge id does not exist
-        if (![self isMessageWithId:messageId managedObjectContext:moc]) {
+        if (![self isMessageWithId:messageId managedObjectContext:moc xmppStream:xmppStream]) {
             
             // Fetch-n-Update OR Insert new message
             
