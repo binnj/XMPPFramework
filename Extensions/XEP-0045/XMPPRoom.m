@@ -683,6 +683,72 @@ enum XMPPRoomState
 		dispatch_async(moduleQueue, block);
 }
 
+- (void)handleFetchRoomInfoResponse:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
+{
+    if ([[iq type] isEqualToString:@"result"])
+    {
+//        <iq from='coven@chat.shakespeare.lit'
+//            id='ik3vs715'
+//            to='hag66@shakespeare.lit/pda'
+//            type='result'>
+//          <query xmlns='http://jabber.org/protocol/disco#info'>
+//            <identity
+//                category='conference'
+//                name='A Dark Cave'
+//                type='text'/>
+//            <feature var='http://jabber.org/protocol/muc'/>
+//            <feature var='muc_passwordprotected'/>
+//            <feature var='muc_hidden'/>
+//            <feature var='muc_temporary'/>
+//            <feature var='muc_open'/>
+//            <feature var='muc_unmoderated'/>
+//            <feature var='muc_nonanonymous'/>
+//          </query>
+//        </iq>
+        
+        
+        [multicastDelegate xmppRoom:self didFetchRoomInfo:iq];
+    }
+    else
+    {
+        [multicastDelegate xmppRoom:self didNotFetchRoomInfo:iq];
+    }
+}
+
+- (void)fetchRoomInfoForRoomJid:(XMPPJID*) roomJid
+{
+    dispatch_block_t block = ^{ @autoreleasepool {
+        
+        // <iq type='get'
+        //       id='mod3'
+        //       to='coven@chat.shakespeare.lit'>
+        //   <query xmlns='http://jabber.org/protocol/disco#info'/>
+        // </iq>
+        
+        NSString *fetchID = [xmppStream generateUUID];
+        
+        NSXMLElement *item = [NSXMLElement elementWithName:@"item"];
+        
+        NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:XMPPMUCDiscoInfo];
+        [query addChild:item];
+        
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"get" to:roomJid elementID:fetchID child:query];
+        
+        [xmppStream sendElement:iq];
+        
+        [responseTracker addID:fetchID
+                        target:self
+                      selector:@selector(handleFetchRoomInfoResponse:withInfo:)
+                       timeout:60.0];
+        
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+}
+
 - (void)handleEditRoomPrivilegesResponse:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
 {
 	if ([[iq type] isEqualToString:@"result"])
