@@ -398,6 +398,12 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
 		
 		XMPPJID *messageJid = isOutgoing ? [message to] : [message from];
         
+        //private messages
+        if ([[messageJid bare] containsString:@"@conference."] && ![[[message attributeForName:@"type"] stringValue] isEqualToString:@"groupchat"] && [messageJid resource]) {
+            NSString* privateUserJidStr = [NSString stringWithFormat:@"%@@%@",[messageJid resource],[messageJid.domain stringByReplacingOccurrencesOfString:@"conference." withString:@""]];
+            messageJid = [XMPPJID jidWithString:privateUserJidStr];
+        }
+        
         // insert only if messge id does not exist
         if (![self isMessageWithId:messageId managedObjectContext:moc xmppStream:xmppStream]) {
             
