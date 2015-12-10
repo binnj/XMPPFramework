@@ -14,6 +14,7 @@ static NSString *const XMPPMUCUserNamespace  = @"http://jabber.org/protocol/muc#
 static NSString *const XMPPMUCAdminNamespace = @"http://jabber.org/protocol/muc#admin";
 static NSString *const XMPPMUCOwnerNamespace = @"http://jabber.org/protocol/muc#owner";
 static NSString *const XMPPMUCDiscoInfo = @"http://jabber.org/protocol/disco#info";
+static NSString *const XMPPMUCDiscoItems = @"http://jabber.org/protocol/disco#items";
 
 
 @interface XMPPRoom : XMPPModule
@@ -139,6 +140,7 @@ static NSString *const XMPPMUCDiscoInfo = @"http://jabber.org/protocol/disco#inf
 - (void)fetchModeratorsList;
 
 - (void)fetchRoomInfoForRoomJid:(XMPPJID*) roomJid;
+- (void)fetchRoomItemsForRoomJid:(XMPPJID*) roomJid;
 
 /**
  * The ban list, member list, and moderator list are simply subsets of the room privileges list.
@@ -313,6 +315,9 @@ static NSString *const XMPPMUCDiscoInfo = @"http://jabber.org/protocol/disco#inf
 
 - (void)xmppRoom:(XMPPRoom *)sender didFetchRoomInfo:(XMPPIQ *)items;
 - (void)xmppRoom:(XMPPRoom *)sender didNotFetchRoomInfo:(XMPPIQ *)iqError;
+
+- (void)xmppRoom:(XMPPRoom *)sender didFetchRoomItems:(NSArray *)items;
+- (void)xmppRoom:(XMPPRoom *)sender didNotFetchRoomItems:(XMPPIQ *)iqError;
 
 - (void)xmppRoom:(XMPPRoom *)sender didEditPrivileges:(XMPPIQ *)iqResult;
 - (void)xmppRoom:(XMPPRoom *)sender didNotEditPrivileges:(XMPPIQ *)iqError;
