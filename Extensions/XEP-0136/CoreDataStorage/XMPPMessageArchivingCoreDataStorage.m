@@ -400,7 +400,8 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
         
         //private messages
         if ([[messageJid bare] containsString:@"@conference."] && ![[[message attributeForName:@"type"] stringValue] isEqualToString:@"groupchat"] && [messageJid resource]) {
-            NSString* privateUserJidStr = [NSString stringWithFormat:@"%@@%@",[messageJid resource],[messageJid.domain stringByReplacingOccurrencesOfString:@"conference." withString:@""]];
+//            NSString* privateUserJidStr = [NSString stringWithFormat:@"%@@%@",[messageJid resource],[messageJid.domain stringByReplacingOccurrencesOfString:@"conference." withString:@""]];
+            NSString* privateUserJidStr = [messageJid resource];
             messageJid = [XMPPJID jidWithString:privateUserJidStr];
         }
         
