@@ -750,15 +750,15 @@ enum XMPPRoomState
 {
     if ([[iq type] isEqualToString:@"result"])
     {
-//        <iq from='coven@chat.shakespeare.lit'
-//            id='kl2fax27'
-//            to='hag66@shakespeare.lit/pda'
-//            type='result'>
-//          <query xmlns='http://jabber.org/protocol/disco#items'>
-//            <item jid='coven@chat.shakespeare.lit/firstwitch' name="firstwitch"/>
-//            <item jid='coven@chat.shakespeare.lit/secondwitch' name="secondwitch"/>
-//          </query>
-//        </iq>
+        //        <iq from='coven@chat.shakespeare.lit'
+        //            id='kl2fax27'
+        //            to='hag66@shakespeare.lit/pda'
+        //            type='result'>
+        //          <query xmlns='http://jabber.org/protocol/disco#items'>
+        //            <item jid='coven@chat.shakespeare.lit/firstwitch' name="firstwitch"/>
+        //            <item jid='coven@chat.shakespeare.lit/secondwitch' name="secondwitch"/>
+        //          </query>
+        //        </iq>
         
         NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMUCDiscoItems];
         NSArray *items = [query elementsForName:@"item"];
@@ -791,6 +791,68 @@ enum XMPPRoomState
         [responseTracker addID:fetchID
                         target:self
                       selector:@selector(handleFetchRoomItemsResponse:withInfo:)
+                       timeout:60.0];
+        
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+}
+
+- (void)handleFetchPublicRooms:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
+{
+    if ([[iq type] isEqualToString:@"result"])
+    {
+        //    <iq from='chat.shakespeare.lit'
+        //        id='zb8q41f4'
+        //        to='hag66@shakespeare.lit/pda'
+        //        type='result'>
+        //      <query xmlns='http://jabber.org/protocol/disco#items'>
+        //        <item jid='heath@chat.shakespeare.lit'
+        //              name='A Lonely Heath'/>
+        //        <item jid='coven@chat.shakespeare.lit'
+        //              name='A Dark Cave'/>
+        //        <item jid='forres@chat.shakespeare.lit'
+        //              name='The Palace'/>
+        //        <item jid='inverness@chat.shakespeare.lit'
+        //              name='Macbeth&apos;s Castle'/>
+        //      </query>
+        //    </iq>
+        
+        NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMUCDiscoItems];
+        NSArray *items = [query elementsForName:@"item"];
+        [multicastDelegate xmppRoom:self didFetchPublicRooms:items];
+    }
+    else
+    {
+        [multicastDelegate xmppRoom:self didNotFetchPublicRooms:iq];
+    }
+}
+
+- (void)fetchPublicRooms
+{
+    dispatch_block_t block = ^{ @autoreleasepool {
+        
+        //    <iq from='hag66@shakespeare.lit/pda'
+        //        id='zb8q41f4'
+        //        to='chat.shakespeare.lit'
+        //        type='get'>
+        //      <query xmlns='http://jabber.org/protocol/disco#items'/>
+        //    </iq>
+        
+        NSString *fetchID = [xmppStream generateUUID];
+        
+        NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:XMPPMUCDiscoItems];
+        
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"get" to:[XMPPJID jidWithString:roomJID.domain] elementID:fetchID child:query];
+        
+        [xmppStream sendElement:iq];
+        
+        [responseTracker addID:fetchID
+                        target:self
+                      selector:@selector(handleFetchPublicRooms:withInfo:)
                        timeout:60.0];
         
     }};

@@ -141,6 +141,7 @@ static NSString *const XMPPMUCDiscoItems = @"http://jabber.org/protocol/disco#it
 
 - (void)fetchRoomInfoForRoomJid:(XMPPJID*) roomJid;
 - (void)fetchRoomItemsForRoomJid:(XMPPJID*) roomJid;
+- (void)fetchPublicRooms;
 
 /**
  * The ban list, member list, and moderator list are simply subsets of the room privileges list.
@@ -318,6 +319,9 @@ static NSString *const XMPPMUCDiscoItems = @"http://jabber.org/protocol/disco#it
 
 - (void)xmppRoom:(XMPPRoom *)sender didFetchRoomItems:(NSArray *)items;
 - (void)xmppRoom:(XMPPRoom *)sender didNotFetchRoomItems:(XMPPIQ *)iqError;
+
+- (void)xmppRoom:(XMPPRoom *)sender didFetchPublicRooms:(NSArray *)items;
+- (void)xmppRoom:(XMPPRoom *)sender didNotFetchPublicRooms:(XMPPIQ *)iqError;
 
 - (void)xmppRoom:(XMPPRoom *)sender didEditPrivileges:(XMPPIQ *)iqResult;
 - (void)xmppRoom:(XMPPRoom *)sender didNotEditPrivileges:(XMPPIQ *)iqError;
