@@ -294,10 +294,11 @@ static NSString *const XMPPMUCDiscoItems = @"http://jabber.org/protocol/disco#it
 - (void)xmppRoomDidDestroy:(XMPPRoom *)sender;
 - (void)xmppRoom:(XMPPRoom *)sender didFailToDestroy:(XMPPIQ *)iqError;
 
-
 - (void)xmppRoom:(XMPPRoom *)sender occupantDidJoin:(XMPPJID *)occupantJID withPresence:(XMPPPresence *)presence;
 - (void)xmppRoom:(XMPPRoom *)sender occupantDidLeave:(XMPPJID *)occupantJID withPresence:(XMPPPresence *)presence;
 - (void)xmppRoom:(XMPPRoom *)sender occupantDidUpdate:(XMPPJID *)occupantJID withPresence:(XMPPPresence *)presence;
+
+- (void)xmppRoom:(XMPPRoom *)sender roomSubjectDidChange:(NSString*)roomSubject;
 
 /**
  * Invoked when a message is received.
