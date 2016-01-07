@@ -363,8 +363,9 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
 {
 	// Message should either have a body, or be a composing notification
 	
-	NSString *messageBody = [[message elementForName:@"body"] stringValue];
+    NSString *messageBody = [[message elementForName:@"body"] stringValue];
     NSString *messageId = [[message attributeForName:@"id"] stringValue];
+    NSString *messagetype = [[message attributeForName:@"fileType"] stringValue];
 	BOOL isComposing = NO;
 	BOOL shouldDeleteComposingMessage = NO;
     
@@ -442,6 +443,7 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
                     didCreateNewArchivedMessage = YES;
                 }
                 archivedMessage.messageId = messageId;
+                archivedMessage.messageType = messagetype;
                 
                 archivedMessage.message = message;
                 archivedMessage.body = messageBody;
