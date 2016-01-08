@@ -23,6 +23,8 @@
 #else
   static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 #endif
+NSString *const kXMPPvCardElement = @"x";
+NSString *const kXMPPvCardNS = @"vcard-temp:x:update";
 
 @interface XMPPvCardTempModule()
 
@@ -242,6 +244,10 @@
     if([iq isResultIQ])
     {
         [(id <XMPPvCardTempModuleDelegate>)multicastDelegate xmppvCardTempModuleDidUpdateMyvCard:self];
+        NSXMLElement *x = [NSXMLElement elementWithName:kXMPPvCardElement xmlns:kXMPPvCardNS];
+        NSXMLElement *presence = [NSXMLElement elementWithName:@"presence"];
+        [presence addChild:x];
+        [xmppStream sendElement:presence];
     }
     else if([iq isErrorIQ])
     {
@@ -281,6 +287,20 @@
 - (void)xmppStreamDidDisconnect:(XMPPStream *)sender withError:(NSError *)error
 {
 	[_myvCardTracker removeAllIDs];
+}
+
+
+- (void)xmppStream:(XMPPStream *)sender didReceivePresence:(XMPPPresence *)presence  {
+    XMPPLogTrace();
+    
+    NSXMLElement *xElement = [presence elementForName:kXMPPvCardElement xmlns:kXMPPvCardNS];
+    
+    if (xElement == nil) {
+        return;
+    }
+    
+    XMPPJID *jid = [presence from];
+    [self fetchvCardTempForJID:jid ignoreStorage:YES];
 }
 
 @end
