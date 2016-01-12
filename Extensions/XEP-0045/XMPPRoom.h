@@ -138,6 +138,8 @@ static NSString *const XMPPMUCDiscoItems = @"http://jabber.org/protocol/disco#it
 - (void)fetchBanList;
 - (void)fetchMembersList;
 - (void)fetchModeratorsList;
+- (void)fetchAdminsList;
+- (void)fetchOwnersList;
 
 - (void)fetchRoomInfoForRoomJid:(XMPPJID*) roomJid;
 - (void)fetchRoomItemsForRoomJid:(XMPPJID*) roomJid;
@@ -311,6 +313,12 @@ static NSString *const XMPPMUCDiscoItems = @"http://jabber.org/protocol/disco#it
 
 - (void)xmppRoom:(XMPPRoom *)sender didFetchMembersList:(NSArray *)items;
 - (void)xmppRoom:(XMPPRoom *)sender didNotFetchMembersList:(XMPPIQ *)iqError;
+
+- (void)xmppRoom:(XMPPRoom *)sender didFetchOwnersList:(NSArray *)items;
+- (void)xmppRoom:(XMPPRoom *)sender didNotFetchOwnersList:(XMPPIQ *)iqError;
+
+- (void)xmppRoom:(XMPPRoom *)sender didFetchAdminsList:(NSArray *)items;
+- (void)xmppRoom:(XMPPRoom *)sender didNotFetchAdminsList:(XMPPIQ *)iqError;
 
 - (void)xmppRoom:(XMPPRoom *)sender didFetchModeratorsList:(NSArray *)items;
 - (void)xmppRoom:(XMPPRoom *)sender didNotFetchModeratorsList:(XMPPIQ *)iqError;
