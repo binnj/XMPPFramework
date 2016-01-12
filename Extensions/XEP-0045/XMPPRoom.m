@@ -619,8 +619,8 @@ enum XMPPRoomState
 		block();
 	else
 		dispatch_async(moduleQueue, block);
-	
-	
+}
+
 - (void)handleFetchOwnersListResponse:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
 {
     if ([[iq type] isEqualToString:@"result"])
@@ -680,8 +680,6 @@ enum XMPPRoomState
         block();
     else
         dispatch_async(moduleQueue, block);
-    
-    
 }
 
 - (void)handleFetchAdminsListResponse:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
