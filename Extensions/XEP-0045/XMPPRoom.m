@@ -342,6 +342,7 @@ enum XMPPRoomState
 		
 		NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMUCOwnerNamespace];
 		NSXMLElement *x = [query elementForName:@"x" xmlns:@"jabber:x:data"];
+        self.roomConfigForm = x.copy;
 		
 		[multicastDelegate xmppRoom:self didFetchConfigurationForm:x];
 	}

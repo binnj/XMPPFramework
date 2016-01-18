@@ -73,6 +73,10 @@ static NSString *const XMPPMUCDiscoItems = @"http://jabber.org/protocol/disco#it
 
 @property (readonly) BOOL isJoined;
 
+@property (nonatomic,strong) NSXMLElement* roomConfigForm;
+
+@property (nonatomic) BOOL roomConfigHasChanged;
+
 #pragma mark Room Lifecycle
 
 /**
