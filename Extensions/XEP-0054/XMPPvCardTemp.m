@@ -172,14 +172,22 @@ NSString *const kXMPPvCardTempElement = @"vCard";
     }
 }
 
-
 - (NSString *)nickname {
-	return [[self elementForName:@"NICKNAME"] stringValue];
+    return [[self elementForName:@"NICKNAME"] stringValue];
 }
 
 
 - (void)setNickname:(NSString *)nick {
-	XMPP_VCARD_SET_STRING_CHILD(nick, @"NICKNAME");
+    XMPP_VCARD_SET_STRING_CHILD(nick, @"NICKNAME");
+}
+
+- (NSString *)photoURL {
+    return [[self elementForName:@"PHPTOURL"] stringValue];
+}
+
+
+- (void)setPhotoURL:(NSString *)photoURL {
+    XMPP_VCARD_SET_STRING_CHILD(photoURL, @"PHPTOURL");
 }
 
 
