@@ -17,6 +17,8 @@
 
 @interface XMPPPushNotification : XMPPModule
 
+- (void) enablePushNotification;
+
 - (void)getServerConfigurationForPushNotifications;
 - (void)setServerConfigurationForPushNotification;
 
