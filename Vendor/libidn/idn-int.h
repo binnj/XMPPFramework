@@ -1,20 +1,20 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
-/* Copyright (C) 2001-2002, 2004-2012 Free Software Foundation, Inc.
-   Written by Paul Eggert, Bruno Haible, Sam Steingold, Peter Burwood.
-   This file is part of gnulib.
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU Lesser General Public License as published by
-   the Free Software Foundation; either version 2.1, or (at your option)
-   any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Lesser General Public License for more details.
-
-   You should have received a copy of the GNU Lesser General Public License
-   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
+/* Copyright (C) 2001-2002, 2004-2015 Free Software Foundation, Inc.
+ Written by Paul Eggert, Bruno Haible, Sam Steingold, Peter Burwood.
+ This file is part of gnulib.
+ 
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation; either version 2.1, or (at your option)
+ any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+ 
+ You should have received a copy of the GNU Lesser General Public License
+ along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 /*
  * ISO C 99 <stdint.h> for platforms that lack it.
@@ -29,38 +29,37 @@
 
 
 /* When including a system file that in turn includes <inttypes.h>,
-   use the system <inttypes.h>, not our substitute.  This avoids
-   problems with (for example) VMS, whose <sys/bitypes.h> includes
-   <inttypes.h>.  */
+ use the system <inttypes.h>, not our substitute.  This avoids
+ problems with (for example) VMS, whose <sys/bitypes.h> includes
+ <inttypes.h>.  */
 #define _GL_JUST_INCLUDE_SYSTEM_INTTYPES_H
 
 /* On Android (Bionic libc), <sys/types.h> includes this file before
-   having defined 'time_t'.  Therefore in this case avoid including
-   other system header files; just include the system's <stdint.h>.
-   Ideally we should test __BIONIC__ here, but it is only defined after
-   <sys/cdefs.h> has been included; hence test __ANDROID__ instead.  */
-#if defined __ANDROID__ \
-    && defined _SYS_TYPES_H_ && !defined _SSIZE_T_DEFINED_
+ having defined 'time_t'.  Therefore in this case avoid including
+ other system header files; just include the system's <stdint.h>.
+ Ideally we should test __BIONIC__ here, but it is only defined after
+ <sys/cdefs.h> has been included; hence test __ANDROID__ instead.  */
+#if defined __ANDROID__ && defined _GL_INCLUDING_SYS_TYPES_H
 # include <stdint.h>
 #else
 
 /* Get those types that are already defined in other system include
-   files, so that we can "#define int8_t signed char" below without
-   worrying about a later system include file containing a "typedef
-   signed char int8_t;" that will get messed up by our macro.  Our
-   macros should all be consistent with the system versions, except
-   for the "fast" types and macros, which we recommend against using
-   in public interfaces due to compiler differences.  */
+ files, so that we can "#define int8_t signed char" below without
+ worrying about a later system include file containing a "typedef
+ signed char int8_t;" that will get messed up by our macro.  Our
+ macros should all be consistent with the system versions, except
+ for the "fast" types and macros, which we recommend against using
+ in public interfaces due to compiler differences.  */
 
 #if 1
 # if defined __sgi && ! defined __c99
-   /* Bypass IRIX's <stdint.h> if in C89 mode, since it merely annoys users
-      with "This header file is to be used only for c99 mode compilations"
-      diagnostics.  */
+/* Bypass IRIX's <stdint.h> if in C89 mode, since it merely annoys users
+ with "This header file is to be used only for c99 mode compilations"
+ diagnostics.  */
 #  define __STDINT_H__
 # endif
 
-  /* Some pre-C++11 <stdint.h> implementations need this.  */
+/* Some pre-C++11 <stdint.h> implementations need this.  */
 # ifdef __cplusplus
 #  ifndef __STDC_CONSTANT_MACROS
 #   define __STDC_CONSTANT_MACROS 1
@@ -70,11 +69,11 @@
 #  endif
 # endif
 
-  /* Other systems may have an incomplete or buggy <stdint.h>.
-     Include it before <inttypes.h>, since any "#include <stdint.h>"
-     in <inttypes.h> would reinclude us, skipping our contents because
-     _GL_LGL_STDINT_H is defined.
-     The include requires a split double-inclusion guard.  */
+/* Other systems may have an incomplete or buggy <stdint.h>.
+ Include it before <inttypes.h>, since any "#include <stdint.h>"
+ in <inttypes.h> would reinclude us, skipping our contents because
+ _GL_LGL_STDINT_H is defined.
+ The include requires a split double-inclusion guard.  */
 # include <stdint.h>
 #endif
 
@@ -82,60 +81,60 @@
 #define _GL_LGL_STDINT_H
 
 /* <sys/types.h> defines some of the stdint.h types as well, on glibc,
-   IRIX 6.5, and OpenBSD 3.8 (via <machine/types.h>).
-   AIX 5.2 <sys/types.h> isn't needed and causes troubles.
-   MacOS X 10.4.6 <sys/types.h> includes <stdint.h> (which is us), but
-   relies on the system <stdint.h> definitions, so include
-   <sys/types.h> after <stdint.h>.  */
+ IRIX 6.5, and OpenBSD 3.8 (via <machine/types.h>).
+ AIX 5.2 <sys/types.h> isn't needed and causes troubles.
+ Mac OS X 10.4.6 <sys/types.h> includes <stdint.h> (which is us), but
+ relies on the system <stdint.h> definitions, so include
+ <sys/types.h> after <stdint.h>.  */
 #if 1 && ! defined _AIX
 # include <sys/types.h>
 #endif
 
 /* Get SCHAR_MIN, SCHAR_MAX, UCHAR_MAX, INT_MIN, INT_MAX,
-   LONG_MIN, LONG_MAX, ULONG_MAX.  */
+ LONG_MIN, LONG_MAX, ULONG_MAX.  */
 #include <limits.h>
 
 #if 1
-  /* In OpenBSD 3.8, <inttypes.h> includes <machine/types.h>, which defines
-     int{8,16,32,64}_t, uint{8,16,32,64}_t and __BIT_TYPES_DEFINED__.
-     <inttypes.h> also defines intptr_t and uintptr_t.  */
+/* In OpenBSD 3.8, <inttypes.h> includes <machine/types.h>, which defines
+ int{8,16,32,64}_t, uint{8,16,32,64}_t and __BIT_TYPES_DEFINED__.
+ <inttypes.h> also defines intptr_t and uintptr_t.  */
 # include <inttypes.h>
 #elif 0
-  /* Solaris 7 <sys/inttypes.h> has the types except the *_fast*_t types, and
-     the macros except for *_FAST*_*, INTPTR_MIN, PTRDIFF_MIN, PTRDIFF_MAX.  */
+/* Solaris 7 <sys/inttypes.h> has the types except the *_fast*_t types, and
+ the macros except for *_FAST*_*, INTPTR_MIN, PTRDIFF_MIN, PTRDIFF_MAX.  */
 # include <sys/inttypes.h>
 #endif
 
 #if 0 && ! defined __BIT_TYPES_DEFINED__
-  /* Linux libc4 >= 4.6.7 and libc5 have a <sys/bitypes.h> that defines
-     int{8,16,32,64}_t and __BIT_TYPES_DEFINED__.  In libc5 >= 5.2.2 it is
-     included by <sys/types.h>.  */
+/* Linux libc4 >= 4.6.7 and libc5 have a <sys/bitypes.h> that defines
+ int{8,16,32,64}_t and __BIT_TYPES_DEFINED__.  In libc5 >= 5.2.2 it is
+ included by <sys/types.h>.  */
 # include <sys/bitypes.h>
 #endif
 
 #undef _GL_JUST_INCLUDE_SYSTEM_INTTYPES_H
 
 /* Minimum and maximum values for an integer type under the usual assumption.
-   Return an unspecified value if BITS == 0, adding a check to pacify
-   picky compilers.  */
+ Return an unspecified value if BITS == 0, adding a check to pacify
+ picky compilers.  */
 
 #define _STDINT_MIN(signed, bits, zero) \
-  ((signed) ? (- ((zero) + 1) << ((bits) ? (bits) - 1 : 0)) : (zero))
+((signed) ? (- ((zero) + 1) << ((bits) ? (bits) - 1 : 0)) : (zero))
 
 #define _STDINT_MAX(signed, bits, zero) \
-  ((signed) \
-   ? ~ _STDINT_MIN (signed, bits, zero) \
-   : /* The expression for the unsigned case.  The subtraction of (signed) \
-        is a nop in the unsigned case and avoids "signed integer overflow" \
-        warnings in the signed case.  */ \
-     ((((zero) + 1) << ((bits) ? (bits) - 1 - (signed) : 0)) - 1) * 2 + 1)
+((signed) \
+? ~ _STDINT_MIN (signed, bits, zero) \
+: /* The expression for the unsigned case.  The subtraction of (signed) \
+is a nop in the unsigned case and avoids "signed integer overflow" \
+warnings in the signed case.  */ \
+((((zero) + 1) << ((bits) ? (bits) - 1 - (signed) : 0)) - 1) * 2 + 1)
 
 #if !GNULIB_defined_stdint_types
 
 /* 7.18.1.1. Exact-width integer types */
 
 /* Here we assume a standard architecture where the hardware integer
-   types have 8, 16, 32, optionally 64 bits.  */
+ types have 8, 16, 32, optionally 64 bits.  */
 
 #undef int8_t
 #undef uint8_t
@@ -159,16 +158,16 @@ typedef unsigned int gl_uint32_t;
 #define uint32_t gl_uint32_t
 
 /* If the system defines INT64_MAX, assume int64_t works.  That way,
-   if the underlying platform defines int64_t to be a 64-bit long long
-   int, the code below won't mistakenly define it to be a 64-bit long
-   int, which would mess up C++ name mangling.  We must use #ifdef
-   rather than #if, to avoid an error with HP-UX 10.20 cc.  */
+ if the underlying platform defines int64_t to be a 64-bit long long
+ int, the code below won't mistakenly define it to be a 64-bit long
+ int, which would mess up C++ name mangling.  We must use #ifdef
+ rather than #if, to avoid an error with HP-UX 10.20 cc.  */
 
 #ifdef INT64_MAX
 # define GL_INT64_T
 #else
 /* Do not undefine int64_t if gnulib is not being used with 64-bit
-   types, since otherwise it breaks platforms like Tandem/NSK.  */
+ types, since otherwise it breaks platforms like Tandem/NSK.  */
 # if LONG_MAX >> 31 >> 31 == 1
 #  undef int64_t
 typedef long int gl_int64_t;
@@ -217,8 +216,8 @@ typedef unsigned long long int gl_uint64_t;
 /* 7.18.1.2. Minimum-width integer types */
 
 /* Here we assume a standard architecture where the hardware integer
-   types have 8, 16, 32, optionally 64 bits. Therefore the leastN_t types
-   are the same as the corresponding N_t types.  */
+ types have 8, 16, 32, optionally 64 bits. Therefore the leastN_t types
+ are the same as the corresponding N_t types.  */
 
 #undef int_least8_t
 #undef uint_least8_t
@@ -244,13 +243,13 @@ typedef unsigned long long int gl_uint64_t;
 /* 7.18.1.3. Fastest minimum-width integer types */
 
 /* Note: Other <stdint.h> substitutes may define these types differently.
-   It is not recommended to use these types in public header files. */
+ It is not recommended to use these types in public header files. */
 
 /* Here we assume a standard architecture where the hardware integer
-   types have 8, 16, 32, optionally 64 bits. Therefore the fastN_t types
-   are taken from the same list of types.  The following code normally
-   uses types consistent with glibc, as that lessens the chance of
-   incompatibility with older GNU hosts.  */
+ types have 8, 16, 32, optionally 64 bits. Therefore the fastN_t types
+ are taken from the same list of types.  The following code normally
+ uses types consistent with glibc, as that lessens the chance of
+ incompatibility with older GNU hosts.  */
 
 #undef int_fast8_t
 #undef uint_fast8_t
@@ -265,7 +264,7 @@ typedef unsigned char gl_uint_fast8_t;
 
 #ifdef __sun
 /* Define types compatible with SunOS 5.10, so that code compiled under
-   earlier SunOS versions works with code compiled under SunOS 5.10.  */
+ earlier SunOS versions works with code compiled under SunOS 5.10.  */
 typedef int gl_int_fast32_t;
 typedef unsigned int gl_uint_fast32_t;
 #else
@@ -300,11 +299,11 @@ typedef unsigned long int gl_uintptr_t;
 /* 7.18.1.5. Greatest-width integer types */
 
 /* Note: These types are compiler dependent. It may be unwise to use them in
-   public header files. */
+ public header files. */
 
 /* If the system defines INTMAX_MAX, assume that intmax_t works, and
-   similarly for UINTMAX_MAX and uintmax_t.  This avoids problems with
-   assuming one type where another is used by the system.  */
+ similarly for UINTMAX_MAX and uintmax_t.  This avoids problems with
+ assuming one type where another is used by the system.  */
 
 #ifndef INTMAX_MAX
 # undef INTMAX_C
@@ -335,8 +334,8 @@ typedef unsigned long int gl_uintmax_t;
 #endif
 
 /* Verify that intmax_t and uintmax_t have the same size.  Too much code
-   breaks if this is not the case.  If this check fails, the reason is likely
-   to be found in the autoconf macros.  */
+ breaks if this is not the case.  If this check fails, the reason is likely
+ to be found in the autoconf macros.  */
 typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
                                 ? 1 : -1];
 
@@ -348,7 +347,7 @@ typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
 /* 7.18.2.1. Limits of exact-width integer types */
 
 /* Here we assume a standard architecture where the hardware integer
-   types have 8, 16, 32, optionally 64 bits.  */
+ types have 8, 16, 32, optionally 64 bits.  */
 
 #undef INT8_MIN
 #undef INT8_MAX
@@ -373,7 +372,7 @@ typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
 
 #if defined GL_INT64_T && ! defined INT64_MAX
 /* Prefer (- INTMAX_C (1) << 63) over (~ INT64_MAX) because SunPRO C 5.0
-   evaluates the latter incorrectly in preprocessor expressions.  */
+ evaluates the latter incorrectly in preprocessor expressions.  */
 # define INT64_MIN  (- INTMAX_C (1) << 63)
 # define INT64_MAX  INTMAX_C (9223372036854775807)
 #endif
@@ -385,8 +384,8 @@ typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
 /* 7.18.2.2. Limits of minimum-width integer types */
 
 /* Here we assume a standard architecture where the hardware integer
-   types have 8, 16, 32, optionally 64 bits. Therefore the leastN_t types
-   are the same as the corresponding N_t types.  */
+ types have 8, 16, 32, optionally 64 bits. Therefore the leastN_t types
+ are the same as the corresponding N_t types.  */
 
 #undef INT_LEAST8_MIN
 #undef INT_LEAST8_MAX
@@ -424,8 +423,8 @@ typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
 /* 7.18.2.3. Limits of fastest minimum-width integer types */
 
 /* Here we assume a standard architecture where the hardware integer
-   types have 8, 16, 32, optionally 64 bits. Therefore the fastN_t types
-   are taken from the same list of types.  */
+ types have 8, 16, 32, optionally 64 bits. Therefore the fastN_t types
+ are taken from the same list of types.  */
 
 #undef INT_FAST8_MIN
 #undef INT_FAST8_MAX
@@ -511,20 +510,20 @@ typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
 # endif
 #else
 # define PTRDIFF_MIN  \
-    _STDINT_MIN (1, 32, 0)
+_STDINT_MIN (1, 32, 0)
 # define PTRDIFF_MAX  \
-    _STDINT_MAX (1, 32, 0)
+_STDINT_MAX (1, 32, 0)
 #endif
 
 /* sig_atomic_t limits */
 #undef SIG_ATOMIC_MIN
 #undef SIG_ATOMIC_MAX
 #define SIG_ATOMIC_MIN  \
-   _STDINT_MIN (1, 32, \
-                0)
+_STDINT_MIN (1, 32, \
+0)
 #define SIG_ATOMIC_MAX  \
-   _STDINT_MAX (1, 32, \
-                0)
+_STDINT_MAX (1, 32, \
+0)
 
 
 /* size_t limit */
@@ -541,35 +540,35 @@ typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
 
 /* wchar_t limits */
 /* Get WCHAR_MIN, WCHAR_MAX.
-   This include is not on the top, above, because on OSF/1 4.0 we have a
-   sequence of nested includes
-   <wchar.h> -> <stdio.h> -> <getopt.h> -> <stdlib.h>, and the latter includes
-   <stdint.h> and assumes its types are already defined.  */
+ This include is not on the top, above, because on OSF/1 4.0 we have a
+ sequence of nested includes
+ <wchar.h> -> <stdio.h> -> <getopt.h> -> <stdlib.h>, and the latter includes
+ <stdint.h> and assumes its types are already defined.  */
 #if 1 && ! (defined WCHAR_MIN && defined WCHAR_MAX)
-  /* BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
-     included before <wchar.h>.  */
+/* BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
+ included before <wchar.h>.  */
 # include <stddef.h>
 # include <stdio.h>
 # include <time.h>
 # define _GL_JUST_INCLUDE_SYSTEM_WCHAR_H
 /*  We don't need WCHAR_* in libidn, so to avoid problems with
-    missing wchar.h, don't include wchar.h here.  */
+ missing wchar.h, don't include wchar.h here.  */
 # undef _GL_JUST_INCLUDE_SYSTEM_WCHAR_H
 #endif
 #undef WCHAR_MIN
 #undef WCHAR_MAX
 #define WCHAR_MIN  \
-   _STDINT_MIN (1, 32, 0)
+_STDINT_MIN (1, 32, 0)
 #define WCHAR_MAX  \
-   _STDINT_MAX (1, 32, 0)
+_STDINT_MAX (1, 32, 0)
 
 /* wint_t limits */
 #undef WINT_MIN
 #undef WINT_MAX
 #define WINT_MIN  \
-   _STDINT_MIN (1, 32, 0)
+_STDINT_MIN (1, 32, 0)
 #define WINT_MAX  \
-   _STDINT_MAX (1, 32, 0)
+_STDINT_MAX (1, 32, 0)
 
 /* 7.18.4. Macros for integer constants */
 
@@ -577,7 +576,7 @@ typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
 /* According to ISO C 99 Technical Corrigendum 1 */
 
 /* Here we assume a standard architecture where the hardware integer
-   types have 8, 16, 32, optionally 64 bits, and int is 32 bits.  */
+ types have 8, 16, 32, optionally 64 bits, and int is 32 bits.  */
 
 #undef INT8_C
 #undef UINT8_C
