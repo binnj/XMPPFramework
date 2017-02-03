@@ -200,7 +200,7 @@
     NSString *fileName = [[NSString alloc] initWithFormat:@"photo%@.png", [xmppStream generateUUID]];
     NSXMLElement *file = [NSXMLElement elementWithName:@"file" xmlns:@"http://jabber.org/protocol/si/profile/file-transfer"];
     [file addAttributeWithName:@"name" stringValue:fileName];
-    [file addAttributeWithName:@"size" stringValue:[[NSString alloc] initWithFormat:@"%d", [data length]]];
+    [file addAttributeWithName:@"size" stringValue:[[NSString alloc] initWithFormat:@"%lu", (unsigned long)[data length]]];
     [si addChild:file];
     
     //    NSXMLElement *desc = [NSXMLElement elementWithName:@"desc" stringValue:@"sending file"];
@@ -323,7 +323,7 @@
 
 #pragma mark - GCDAsyncSocket delegates
 - (void)socket:(GCDAsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag {
-    NSLog(@"FINISHED %d", [data length]);
+    NSLog(@"FINISHED %lu", (unsigned long)[data length]);
     [sock disconnectAfterReading];
     state = kXMPPSIFileTransferStateNone;
     mimeType = kXMPPSIFileTransferMimeTypeNone;
