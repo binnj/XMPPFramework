@@ -148,20 +148,24 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         
         // Update cached value
         
-        preferences = [newPreferences copy];
-        
-        // Update storage
-        
-        if ([xmppMessageArchivingStorage respondsToSelector:@selector(setPreferences:forUser:)])
-        {
-            XMPPJID *myBareJid = [[xmppStream myJID] bareJID];
+        // Update preferences only if it has changed
+        if (![newPreferences.XMLString isEqualToString:preferences.XMLString]) {
             
-            [xmppMessageArchivingStorage setPreferences:preferences forUser:myBareJid];
+            preferences = [newPreferences copy];
+            
+            // Update storage
+            
+            if ([xmppMessageArchivingStorage respondsToSelector:@selector(setPreferences:forUser:)])
+            {
+                XMPPJID *myBareJid = [[xmppStream myJID] bareJID];
+                
+                [xmppMessageArchivingStorage setPreferences:preferences forUser:myBareJid];
+            }
+            
+            //  - Send new pref to server
+            XMPPIQ *iq = [XMPPIQ iqWithType:@"set" to:nil elementID:nil child:preferences];
+            [xmppStream sendElement:iq];
         }
-        
-        //  - Send new pref to server
-        XMPPIQ *iq = [XMPPIQ iqWithType:@"set" to:nil elementID:nil child:preferences];
-        [xmppStream sendElement:iq];
         
     }};
     
