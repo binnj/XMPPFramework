@@ -6,8 +6,10 @@
 //  Copyright © 2017 Morgiij Inc. All rights reserved.
 //
 
-#ifndef XMPPPublishingStreamInitiationRequests_h
-#define XMPPPublishingStreamInitiationRequests_h
+#import <Foundation/Foundation.h>
+#import "XMPP.h"
 
+@interface XMPPPublishingStreamInitiationRequests : XMPPModule {
+}
 
-#endif /* XMPPPublishingStreamInitiationRequests_h */
+@end
