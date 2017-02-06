@@ -4483,6 +4483,8 @@ enum XMPPStreamConfig
 
 - (void)xmppParser:(XMPPParser *)sender didReadElement:(NSXMLElement *)element
 {
+    NSLog(@"%@", element);
+    
 	// This method is invoked on the xmppQueue.
 	
 	if (sender != parser) return;

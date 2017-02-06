@@ -300,6 +300,72 @@
     return NO;
 }
 
+/*
+ <message xmlns="jabber:client" from="tmgadmin@ejabberd-dev.morgiij.com/Besat&#x2019;s MacBook Pro" to="besat-ldn@ejabberd-dev.morgiij.com"
+ type="chat" id="E399E1FF-8D8D-4220-83DD-B8615E6DF277">
+    <x xmlns="http://www.apple.com/xmpp/message-attachments">
+        <attachment id="1">
+            <sipub xmlns="http://jabber.org/protocol/sipub" from="tmgadmin@ejabberd-dev.morgiij.com/Besat&#x2019;s MacBook Pro"
+            id="sipubid_7D0EF6A6" mime-type="binary/octet-stream" profile="http://jabber.org/protocol/si/profile/file-transfer">
+                <file xmlns="http://jabber.org/protocol/si/profile/file-transfer" xmlns:ichat="apple:profile:transfer-extensions"
+                name="small.png" size="1182" ichat:posixflags="000001A4" />
+            </sipub>
+        </attachment>
+    </x>
+    <body/>
+        <html xmlns="http://jabber.org/protocol/xhtml-im">
+            <body xmlns="http://www.w3.org/1999/xhtml"><img alt="small.png" src="message-attachments:1" width="144" height="144" />
+            </body>
+        </html>
+    <x xmlns="jabber:x:event">
+        <composing/>
+    </x>
+    <active xmlns="http://jabber.org/protocol/chatstates" />
+ </message>
+ */
+
+- (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message {
+    // imessage file transfer format
+    NSXMLElement *x = [message elementForName:@"x"];
+    if (x != nil) {
+        NSXMLElement *attachment = [x elementForName:@"attachment"];
+        if (attachment != nil) {
+            NSXMLElement *sipub = [attachment elementForName:@"sipub"];
+            if (sipub != nil) {
+                if (sipub != nil) {
+                    if ([@"http://jabber.org/protocol/sipub" isEqualToString:[sipub xmlns]]) {
+                        NSXMLElement *file = [sipub elementForName:@"file"];
+                        if ([@"http://jabber.org/protocol/si/profile/file-transfer" isEqualToString:[file xmlns]]) {
+                            // sid is an important value, which will be used throughtout.
+                            // It will be referred back to by other IQs involving file tranfers.
+                            self.sid = [[sipub attributeForName:@"id"] stringValue];
+                            self.recvFileSize = (NSUInteger)[[[file attributeForName:@"size"] stringValue] integerValue];
+                            if ([@"image/jpg" caseInsensitiveCompare:[[file attributeForName:@"mime-type"] stringValue]] == NSOrderedSame
+                                || [@"image/jpeg" caseInsensitiveCompare:[[file attributeForName:@"mime-type"] stringValue]] == NSOrderedSame)
+                            {
+                                mimeType = kXMPPSIFileTransferMimeTypeJPG;
+                            }
+                            else if ([@"image/png" isEqualToString:[[file attributeForName:@"mime-type"] stringValue]] == NSOrderedSame)
+                            {
+                                mimeType = kXMPPSIFileTransferMimeTypePNG;
+                            }
+                            else if ([@"image/gif" isEqualToString:[[file attributeForName:@"mime-type"] stringValue]] == NSOrderedSame)
+                            {
+                                mimeType = kXMPPSIFileTransferMimeTypeGIF;
+                            }
+                            senderJID = [message from];
+                            
+                            [TURNSocket setProxyCandidates:[[NSArray alloc] initWithObjects:xmppStream.hostName, nil]];
+                            turnSocket = [[TURNSocket alloc] initWithStream:xmppStream toJID:senderJID sid:sid];
+                            [turnSocket startWithDelegate:self delegateQueue:dispatch_get_main_queue()];
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 #pragma mark - TurnSocket delegates
 - (void)turnSocket:(TURNSocket *)sender didSucceed:(GCDAsyncSocket *)socket {
