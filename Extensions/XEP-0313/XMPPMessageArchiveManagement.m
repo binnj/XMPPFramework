@@ -379,7 +379,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
             [field addAttributeWithName:@"var" stringValue:@"FORM_TYPE"];
             [field addAttributeWithName:@"type" stringValue:@"hidden"];
             
-            NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:@"urn:xmpp:mam:1"];
+            NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:XMLNS_XMPP_ARCHIVE];
             
             [field addChild:value];
             [x addChild:field];
