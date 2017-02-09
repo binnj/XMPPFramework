@@ -59,6 +59,8 @@
  * If you created your project with a previous version of Xcode, you may need to add the DEBUG macro manually.
 **/
 
+#undef LOG_INFO
+#undef LOG_DEBUG
 #import "DDLog.h"
 
 // Global flag to enable/disable logging throughout the entire xmpp framework.

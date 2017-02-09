@@ -40,7 +40,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     // This will cause a crash - it's designed to.
     // Only the init methods listed in XMPPMessageArchiving.h are supported.
     _syncState = XMPPMessageArchiveSyncStateNone;
-    return [self initWithMessageArchivingStorage:nil dispatchQueue:NULL];
+    return [self initWithMessageArchivingManagementStorage:nil dispatchQueue:NULL];
 }
 
 - (id)initWithDispatchQueue:(dispatch_queue_t)queue
@@ -49,16 +49,16 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     // Only the init methods listed in XMPPMessageArchiving.h are supported.
     
     _syncState = XMPPMessageArchiveSyncStateNone;
-    return [self initWithMessageArchivingStorage:nil dispatchQueue:queue];
+    return [self initWithMessageArchivingManagementStorage:nil dispatchQueue:queue];
 }
 
-- (id)initWithMessageArchivingStorage:(id <XMPPMessageArchivingStorage>)storage
+- (id)initWithMessageArchivingManagementStorage:(id <XMPPMessageArchivingManagementStorage>)storage
 {
     _syncState = XMPPMessageArchiveSyncStateNone;
-    return [self initWithMessageArchivingStorage:storage dispatchQueue:NULL];
+    return [self initWithMessageArchivingManagementStorage:storage dispatchQueue:NULL];
 }
 
-- (id)initWithMessageArchivingStorage:(id <XMPPMessageArchivingStorage>)storage dispatchQueue:(dispatch_queue_t)queue
+- (id)initWithMessageArchivingManagementStorage:(id <XMPPMessageArchivingManagementStorage>)storage dispatchQueue:(dispatch_queue_t)queue
 {
     NSParameterAssert(storage != nil);
     
@@ -66,7 +66,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     {
         if ([storage configureWithParent:self queue:moduleQueue])
         {
-            xmppMessageArchivingStorage = storage;
+            xmppMessageArchivingManagementStorage = storage;
         }
         else
         {
@@ -118,11 +118,11 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
 #pragma mark Properties
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (id <XMPPMessageArchivingStorage>)xmppMessageArchivingStorage
+- (id <XMPPMessageArchivingManagementStorage>)xmppMessageArchivingManagementStorage
 {
-    // Note: The xmppMessageArchivingStorage variable is read-only (set in the init method)
+    // Note: The xmppMessageArchivingManagementStorage variable is read-only (set in the init method)
     
-    return xmppMessageArchivingStorage;
+    return xmppMessageArchivingManagementStorage;
 }
 
 - (NSXMLElement *)preferences
@@ -155,11 +155,11 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
             
             // Update storage
             
-            if ([xmppMessageArchivingStorage respondsToSelector:@selector(setPreferences:forUser:)])
+            if ([xmppMessageArchivingManagementStorage respondsToSelector:@selector(setPreferences:forUser:)])
             {
                 XMPPJID *myBareJid = [[xmppStream myJID] bareJID];
                 
-                [xmppMessageArchivingStorage setPreferences:preferences forUser:myBareJid];
+                [xmppMessageArchivingManagementStorage setPreferences:preferences forUser:myBareJid];
             }
             
             //  - Send new pref to server
@@ -185,11 +185,11 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     
     // Fetch most recent preferences
     
-    if ([xmppMessageArchivingStorage respondsToSelector:@selector(preferencesForUser:)])
+    if ([xmppMessageArchivingManagementStorage respondsToSelector:@selector(preferencesForUser:)])
     {
         XMPPJID *myBareJid = [[xmppStream myJID] bareJID];
         
-        preferences = [xmppMessageArchivingStorage preferencesForUser:myBareJid];
+        preferences = [xmppMessageArchivingManagementStorage preferencesForUser:myBareJid];
     }
     
     // Request archiving preferences from server
@@ -229,7 +229,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     if ([self shouldArchiveMessage:message xmppStream:sender])
     {
         XMPPMessage *messageToSync = [self messageToSyncFromServerResponseMessage:message];
-        [xmppMessageArchivingStorage archiveMessage:messageToSync outgoing:[self isOutgoing:messageToSync] xmppStream:sender];
+        [xmppMessageArchivingManagementStorage archiveMessage:messageToSync outgoing:[self isOutgoing:messageToSync] xmppStream:sender];
     }
 }
 

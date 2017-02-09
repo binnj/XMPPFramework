@@ -9,7 +9,7 @@
 #import "XMPP.h"
 #import "XMPPIDTracker.h"
 
-@protocol XMPPMessageArchivingStorage;
+@protocol XMPPMessageArchivingManagementStorage;
 
 /**
  * This class provides support for query and control an archive of messages stored on the server.
@@ -18,16 +18,16 @@
 @interface XMPPMessageArchiveManagement : XMPPModule
 {
     @protected
-        __strong id <XMPPMessageArchivingStorage> xmppMessageArchivingStorage;
+        __strong id <XMPPMessageArchivingManagementStorage> xmppMessageArchivingManagementStorage;
     @private
         XMPPIDTracker *responseTracker;
         NSXMLElement *preferences;
 }
 
-- (id)initWithMessageArchivingStorage:(id <XMPPMessageArchivingStorage>)storage;
-- (id)initWithMessageArchivingStorage:(id <XMPPMessageArchivingStorage>)storage dispatchQueue:(dispatch_queue_t)queue;
+- (id)initWithMessageArchivingManagementStorage:(id <XMPPMessageArchivingManagementStorage>)storage;
+- (id)initWithMessageArchivingManagementStorage:(id <XMPPMessageArchivingManagementStorage>)storage dispatchQueue:(dispatch_queue_t)queue;
 
-@property (readonly, strong) id <XMPPMessageArchivingStorage> xmppMessageArchivingStorage;
+@property (readonly, strong) id <XMPPMessageArchivingManagementStorage> xmppMessageArchivingManagementStorage;
 @property (readwrite, copy) NSXMLElement *preferences;
 
 - (void) syncLocalMessageArchiveWithServerMessageArchive;
@@ -39,7 +39,7 @@
 #pragma mark -
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@protocol XMPPMessageArchivingStorage <NSObject>
+@protocol XMPPMessageArchivingManagementStorage <NSObject>
 @required
 
 //
