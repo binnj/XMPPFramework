@@ -196,7 +196,6 @@
     
     mimeType = kXMPPSIFileTransferMimeTypePNG;
     
-#warning change to actual image
     NSString *fileName = [[NSString alloc] initWithFormat:@"photo%@.png", [xmppStream generateUUID]];
     NSXMLElement *file = [NSXMLElement elementWithName:@"file" xmlns:@"http://jabber.org/protocol/si/profile/file-transfer"];
     [file addAttributeWithName:@"name" stringValue:fileName];

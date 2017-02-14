@@ -1728,7 +1728,7 @@ shouldTimeoutReadWithTag:(long)tag
                  elapsed:(NSTimeInterval)elapsed
                bytesDone:(NSUInteger)length
 {
-  XMPPLogVerbose(@"%@: socket shouldTimeoutReadWithTag:%ld elapsed:%d bytesDone:%d", THIS_FILE, tag,
+  XMPPLogVerbose(@"%@: socket shouldTimeoutReadWithTag:%ld elapsed:%lf bytesDone:%d", THIS_FILE, tag,
                  elapsed, length);
 
   NSString *reason = [NSString stringWithFormat:@"Read timeout. %d bytes read.", length];
