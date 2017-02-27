@@ -8,7 +8,7 @@
 
 #import "XMPPHttpFileUpload.h"
 #import "XMPPLogging.h"
-#import "XMPPNamespaces.h"
+#import "XMPPConstants.h"
 
 #if DEBUG
 static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN; // | XMPP_LOG_FLAG_TRACE;
