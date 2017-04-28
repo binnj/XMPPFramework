@@ -160,7 +160,7 @@ NSString *const kXMPPvCardNS = @"vcard-temp:x:update";
 		
 		XMPPvCardTemp *vCardTemp = [_xmppvCardTempModuleStorage vCardTempForJID:jid xmppStream:xmppStream];
 		
-		if (shouldFetch || (vCardTemp == nil && [_xmppvCardTempModuleStorage shouldFetchvCardTempForJID:jid xmppStream:xmppStream]))
+		if (vCardTemp == nil && shouldFetch && [_xmppvCardTempModuleStorage shouldFetchvCardTempForJID:jid xmppStream:xmppStream])
 		{
 			[self _fetchvCardTempForJID:jid];
 		}
