@@ -2445,6 +2445,10 @@ enum XMPPStreamConfig
 	[multicastDelegate xmppStream:self didSendMessage:message];
 }
 
+- (void)callDidSendMessage:(XMPPMessage *)message {
+    [multicastDelegate xmppStream:self didSendMessage:message];
+}
+
 - (void)continueSendPresence:(XMPPPresence *)presence withTag:(long)tag
 {
 	NSAssert(dispatch_get_specific(xmppQueueTag), @"Invoked on incorrect queue");
