@@ -218,6 +218,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         }
         if (fin) {
             _syncState = XMPPMessageArchiveSyncStateNone;
+            [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
         }
     }
     return NO;
@@ -237,6 +238,8 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
 {
     if ([[iq elementID] isEqualToString:syncId]) {
         _syncState = XMPPMessageArchiveSyncStateWaitingForSyncResponse;
+        [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidStarted];
+        
     }
 }
 
@@ -282,6 +285,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         else if ([message elementsForName:@"fin"] && [[[[message elementsForName:@"fin"] firstObject] xmlns] isEqualToString:XMLNS_XMPP_ARCHIVE])
         {
             _syncState = XMPPMessageArchiveSyncStateNone;
+            [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
         }
     }
     return NO;

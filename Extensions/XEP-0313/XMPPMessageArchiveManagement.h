@@ -98,3 +98,21 @@
 - (NSXMLElement *)preferencesForUser:(XMPPJID *)bareUserJid;
 
 @end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - supdawg2016+may26@gmail.com
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@protocol XMPPMessageArchiveManagementDelegate <NSObject>
+@optional
+
+/**
+ * Implement this method to receive notifications of sync start
+ */
+- (void)syncLocalMessageArchiveWithServerMessageArchiveDidStarted;
+
+/**
+ * Implement this method to receive notifications of end of sync
+ */
+- (void)syncLocalMessageArchiveWithServerMessageArchiveDidFinished;
+@end
