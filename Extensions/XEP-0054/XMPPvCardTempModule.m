@@ -300,7 +300,9 @@ NSString *const kXMPPvCardNS = @"vcard-temp:x:update";
     }
     
     XMPPJID *jid = [presence from];
-    [self fetchvCardTempForJID:jid ignoreStorage:YES];
+    if (![[[sender myJID] bare] isEqualToString:[jid bare]]) {
+        [self fetchvCardTempForJID:jid ignoreStorage:YES];
+    }
 }
 
 @end
