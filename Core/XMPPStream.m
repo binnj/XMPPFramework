@@ -4487,7 +4487,8 @@ enum XMPPStreamConfig
 
 - (void)xmppParser:(XMPPParser *)sender didReadElement:(NSXMLElement *)element
 {
-    NSLog(@"%@", element);
+    // SCC: 20180821: Haven't looked where this NSLog came from yet; far too verbose and XMPPLogRecvPost is available instead..
+    // NSLog(@"%@", element);
     
 	// This method is invoked on the xmppQueue.
 	
