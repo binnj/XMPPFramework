@@ -416,8 +416,15 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
                 NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
                 NSXMLElement *max = [NSXMLElement elementWithName:@"value" stringValue:maxResultNumberStr];
                 [set addChild:max];
-                [x addChild:set];
+                [query addChild:set];
             }
+        }
+        else
+        {
+            NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
+            NSXMLElement *beforeElement = [NSXMLElement elementWithName:@"before"];
+            [set addChild:beforeElement];
+            [query addChild:set];
         }
         
         XMPPIQ *iq = [XMPPIQ iqWithType:@"set" elementID:syncId child:query];
