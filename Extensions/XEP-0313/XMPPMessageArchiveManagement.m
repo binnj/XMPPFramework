@@ -384,7 +384,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         
         // creating x item
         NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:XMLNS_XMPP_ARCHIVE];
-        [query addAttribute:[DDXMLNode attributeWithName:@"queryid" stringValue:[NSUUID UUID].UUIDString]];
+        [query addAttribute:[DDXMLNode attributeWithName:@"queryid" stringValue:[xmppStream generateUUID]]];
         
         if (withBareJid || startTime || endTime) {
             NSXMLElement *x = [NSXMLElement elementWithName:@"x" xmlns:@"jabber:x:data"];
