@@ -218,7 +218,17 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         }
         if (fin) {
             _syncState = XMPPMessageArchiveSyncStateNone;
-            [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
+            if([[[fin attributeForName:@"complete"] stringValue] isEqualToString:@"true"])
+            {
+                [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
+            }
+            else
+            {
+                NSXMLElement *set = [fin elementForName:@"set"];
+                double timestamp = [[set elementForName:@"last"] stringValueAsDouble];
+                NSDate *date = [NSDate dateWithTimeIntervalSince1970:(timestamp / 1000000.0)];
+                [self fetchArchivedMessagesWithBareJid:nil startTime:date endTime:nil maxResultNumber:nil];
+            }
         }
     }
     return NO;
@@ -374,6 +384,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         
         // creating x item
         NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:XMLNS_XMPP_ARCHIVE];
+        [query addAttribute:[DDXMLNode attributeWithName:@"queryid" stringValue:[NSUUID UUID].UUIDString]];
         
         if (withBareJid || startTime || endTime) {
             NSXMLElement *x = [NSXMLElement elementWithName:@"x" xmlns:@"jabber:x:data"];
@@ -414,18 +425,22 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
             
             if (maxResultNumber && maxResultNumber > 0) {
                 NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
-                NSXMLElement *max = [NSXMLElement elementWithName:@"value" stringValue:maxResultNumberStr];
+                NSXMLElement *max = [NSXMLElement elementWithName:@"max" stringValue:maxResultNumberStr];
                 [set addChild:max];
                 [query addChild:set];
             }
         }
+        /*
         else
         {
             NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
+            NSXMLElement *max = [NSXMLElement elementWithName:@"max" numberValue:@(1000)];
+            [set addChild:max];
             NSXMLElement *beforeElement = [NSXMLElement elementWithName:@"before"];
             [set addChild:beforeElement];
             [query addChild:set];
         }
+         */
         
         XMPPIQ *iq = [XMPPIQ iqWithType:@"set" elementID:syncId child:query];
         [xmppStream sendElement:iq];
