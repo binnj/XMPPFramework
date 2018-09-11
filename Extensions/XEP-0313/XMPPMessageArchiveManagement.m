@@ -218,17 +218,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         }
         if (fin) {
             _syncState = XMPPMessageArchiveSyncStateNone;
-            if([[[fin attributeForName:@"complete"] stringValue] isEqualToString:@"true"])
-            {
-                [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
-            }
-            else
-            {
-                NSXMLElement *set = [fin elementForName:@"set"];
-                double timestamp = [[set elementForName:@"last"] stringValueAsDouble];
-                NSDate *date = [NSDate dateWithTimeIntervalSince1970:(timestamp / 1000000.0)];
-                [self fetchArchivedMessagesWithBareJid:nil startTime:date endTime:nil maxResultNumber:nil];
-            }
+            [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
         }
     }
     return NO;
@@ -430,17 +420,15 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
                 [query addChild:set];
             }
         }
-        /*
         else
         {
             NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
-            NSXMLElement *max = [NSXMLElement elementWithName:@"max" numberValue:@(1000)];
+            NSXMLElement *max = [NSXMLElement elementWithName:@"max" numberValue:@(250)];
             [set addChild:max];
             NSXMLElement *beforeElement = [NSXMLElement elementWithName:@"before"];
             [set addChild:beforeElement];
             [query addChild:set];
         }
-         */
         
         XMPPIQ *iq = [XMPPIQ iqWithType:@"set" elementID:syncId child:query];
         [xmppStream sendElement:iq];
