@@ -423,7 +423,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         else
         {
             NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
-            NSXMLElement *max = [NSXMLElement elementWithName:@"max" numberValue:@(250)];
+            NSXMLElement *max = [NSXMLElement elementWithName:@"max" numberValue:@(50)];
             [set addChild:max];
             NSXMLElement *beforeElement = [NSXMLElement elementWithName:@"before"];
             [set addChild:beforeElement];
