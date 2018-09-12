@@ -374,6 +374,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         
         // creating x item
         NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:XMLNS_XMPP_ARCHIVE];
+        [query addAttribute:[DDXMLNode attributeWithName:@"queryid" stringValue:[xmppStream generateUUID]]];
         
         if (withBareJid || startTime || endTime) {
             NSXMLElement *x = [NSXMLElement elementWithName:@"x" xmlns:@"jabber:x:data"];
@@ -414,7 +415,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
             
             if (maxResultNumber && maxResultNumber > 0) {
                 NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
-                NSXMLElement *max = [NSXMLElement elementWithName:@"value" stringValue:maxResultNumberStr];
+                NSXMLElement *max = [NSXMLElement elementWithName:@"max" stringValue:maxResultNumberStr];
                 [set addChild:max];
                 [query addChild:set];
             }
@@ -422,6 +423,8 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         else
         {
             NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
+            NSXMLElement *max = [NSXMLElement elementWithName:@"max" numberValue:@(50)];
+            [set addChild:max];
             NSXMLElement *beforeElement = [NSXMLElement elementWithName:@"before"];
             [set addChild:beforeElement];
             [query addChild:set];
