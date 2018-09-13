@@ -218,7 +218,18 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         }
         if (fin) {
             _syncState = XMPPMessageArchiveSyncStateNone;
-            [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
+            if([[[fin attributeForName:@"complete"] stringValue] isEqualToString:@"true"])
+            {
+                [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
+            }
+            else
+            {
+                NSXMLElement *set = [fin elementForName:@"set"];
+                double timestamp = [[set elementForName:@"last"] stringValueAsDouble];
+                NSDate *date = [NSDate dateWithTimeIntervalSince1970:(timestamp / 1000000.0)];
+                NSInteger max = 250;
+                [self fetchArchivedMessagesWithBareJid:nil startTime:date endTime:nil maxResultNumber:&max];
+            }
         }
     }
     return NO;
