@@ -221,6 +221,8 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
             if([[[fin attributeForName:@"complete"] stringValue] isEqualToString:@"true"])
             {
                 [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
+                NSString* kLastSyncDate = [NSString stringWithFormat:@"LastSyncDate_%@",xmppStream.myJID.bare];
+                [[NSUserDefaults standardUserDefaults] setObject:[NSDate date] forKey:kLastSyncDate];
             }
             else
             {
@@ -335,6 +337,12 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         return YES;
     }
     return NO;
+}
+
+- (NSDate *) dateOfLastSync
+{
+    NSString* kLastSyncDate = [NSString stringWithFormat:@"LastSyncDate_%@",xmppStream.myJID.bare];
+    return [[NSUserDefaults standardUserDefaults] objectForKey:kLastSyncDate];
 }
 
 - (void) syncLocalMessageArchiveWithServerMessageArchive
