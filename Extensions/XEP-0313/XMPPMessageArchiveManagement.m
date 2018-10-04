@@ -204,6 +204,12 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     [sender sendElement:iq];
 }
 
+
+- (void)xmppStreamDidDisconnect:(XMPPStream *)sender withError:(NSError *)error
+{
+    _syncState = XMPPMessageArchiveSyncStateNone;
+}
+
 - (BOOL)xmppStream:(XMPPStream *)sender didReceiveIQ:(XMPPIQ *)iq
 {
     NSString *type = [iq type];
