@@ -255,7 +255,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
 
 - (void)xmppStream:(XMPPStream *)sender didSendIQ:(XMPPIQ *)iq
 {
-    if ([[iq elementID] isEqualToString:syncId]) {
+    if (syncId && [[iq elementID] isEqualToString:syncId]) {
         _syncState = XMPPMessageArchiveSyncStateWaitingForSyncResponse;
         [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidStarted];
         
