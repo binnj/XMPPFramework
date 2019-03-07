@@ -3,7 +3,8 @@
 @class XMPPIQ;
 @class XMPPJID;
 @class XMPPStream;
-@class GCDAsyncSocket;
+@import CocoaAsyncSocket;
+@protocol TURNSocketDelegate;
 
 /**
  * TURNSocket is an implementation of XEP-0065: SOCKS5 Bytestreams.
@@ -52,13 +53,12 @@
 
 + (BOOL)isNewStartTURNRequest:(XMPPIQ *)iq;
 
-+ (NSArray *)proxyCandidates;
-+ (void)setProxyCandidates:(NSArray *)candidates;
+@property (class, atomic) NSArray<NSString*> *proxyCandidates;
 
 - (id)initWithStream:(XMPPStream *)xmppStream toJID:(XMPPJID *)jid sid:(NSString*)sid;
 - (id)initWithStream:(XMPPStream *)xmppStream incomingTURNRequest:(XMPPIQ *)iq;
 
-- (void)startWithDelegate:(id)aDelegate delegateQueue:(dispatch_queue_t)aDelegateQueue;
+- (void)startWithDelegate:(id<TURNSocketDelegate>)aDelegate delegateQueue:(dispatch_queue_t)aDelegateQueue;
 
 - (BOOL)isClient;
 
@@ -79,3 +79,4 @@
 
 @end
 
+NS_ASSUME_NONNULL_END

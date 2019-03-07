@@ -71,7 +71,7 @@
 }
 
 
-- (void)setHome:(BOOL)home {
+- (void)setIsHome:(BOOL)home {
 	XMPP_VCARD_SET_EMPTY_CHILD(home && ![self isHome], @"HOME");
 }
 
@@ -81,7 +81,7 @@
 }
 
 
-- (void)setWork:(BOOL)work {
+- (void)setIsWork:(BOOL)work {
 	XMPP_VCARD_SET_EMPTY_CHILD(work && ![self isWork], @"WORK");
 }
 
@@ -91,7 +91,7 @@
 }
 
 
-- (void)setVoice:(BOOL)voice {
+- (void)setIsVoice:(BOOL)voice {
 	XMPP_VCARD_SET_EMPTY_CHILD(voice && ![self isVoice], @"VOICE");
 }
 
@@ -101,7 +101,7 @@
 }
 
 
-- (void)setFax:(BOOL)fax {
+- (void)setIsFax:(BOOL)fax {
 	XMPP_VCARD_SET_EMPTY_CHILD(fax && ![self isFax], @"FAX");
 }
 
@@ -111,7 +111,7 @@
 }
 
 
-- (void)setPager:(BOOL)pager {
+- (void)setIsPager:(BOOL)pager {
 	XMPP_VCARD_SET_EMPTY_CHILD(pager && ![self isPager], @"PAGER");
 }
 
@@ -121,7 +121,7 @@
 }
 
 
-- (void)setMessaging:(BOOL)msg {
+- (void)setIsMessaging:(BOOL)msg {
 	XMPP_VCARD_SET_EMPTY_CHILD(msg && ![self hasMessaging], @"MSG");
 }
 
@@ -131,7 +131,7 @@
 }
 
 
-- (void)setCell:(BOOL)cell {
+- (void)setIsCell:(BOOL)cell {
 	XMPP_VCARD_SET_EMPTY_CHILD(cell && ![self isCell], @"CELL");
 }
 
@@ -141,7 +141,7 @@
 }
 
 
-- (void)setVideo:(BOOL)video {
+- (void)setIsVideo:(BOOL)video {
 	XMPP_VCARD_SET_EMPTY_CHILD(video && ![self isVideo], @"VIDEO");
 }
 
@@ -151,7 +151,7 @@
 }
 
 
-- (void)setBBS:(BOOL)bbs {
+- (void)setIsBBS:(BOOL)bbs {
 	XMPP_VCARD_SET_EMPTY_CHILD(bbs && ![self isBBS], @"BBS");
 }
 
@@ -161,7 +161,7 @@
 }
 
 
-- (void)setModem:(BOOL)modem {
+- (void)setIsModem:(BOOL)modem {
 	XMPP_VCARD_SET_EMPTY_CHILD(modem && ![self isModem], @"MODEM");
 }
 
@@ -171,7 +171,7 @@
 }
 
 
-- (void)setISDN:(BOOL)isdn {
+- (void)setIsISDN:(BOOL)isdn {
 	XMPP_VCARD_SET_EMPTY_CHILD(isdn && ![self isISDN], @"ISDN");
 }
 
@@ -181,7 +181,7 @@
 }
 
 
-- (void)setPCS:(BOOL)pcs {
+- (void)setIsPCS:(BOOL)pcs {
 	XMPP_VCARD_SET_EMPTY_CHILD(pcs && ![self isPCS], @"PCS");
 }
 
@@ -191,7 +191,7 @@
 }
 
 
-- (void)setPreferred:(BOOL)pref {
+- (void)setIsPreferred:(BOOL)pref {
 	XMPP_VCARD_SET_EMPTY_CHILD(pref && ![self isPreferred], @"PREF");
 }
 

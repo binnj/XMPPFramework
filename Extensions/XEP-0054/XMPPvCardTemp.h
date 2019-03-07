@@ -28,7 +28,7 @@ typedef enum _XMPPvCardTempClass {
 	XMPPvCardTempClassConfidential,
 } XMPPvCardTempClass;
 
-
+NS_ASSUME_NONNULL_BEGIN
 extern NSString *const kXMPPNSvCardTemp;
 extern NSString *const kXMPPvCardTempElement;
 
@@ -53,48 +53,48 @@ extern NSString *const kXMPPvCardTempElement;
 @property (nonatomic, strong) NSString *prefix;
 @property (nonatomic, strong) NSString *suffix;
 
-@property (nonatomic, strong) NSArray *addresses;
-@property (nonatomic, strong) NSArray *labels;
-@property (nonatomic, strong) NSArray *telecomsAddresses;
-@property (nonatomic, strong) NSArray *emailAddresses;
+@property (nonatomic, strong, nullable) NSArray<XMPPvCardTempAdr*> *addresses;
+@property (nonatomic, strong, nullable) NSArray<XMPPvCardTempLabel*> *labels;
+@property (nonatomic, strong, nullable) NSArray<XMPPvCardTempTel*> *telecomsAddresses;
+@property (nonatomic, strong) NSArray<XMPPvCardTempEmail*> *emailAddresses;
 
-@property (nonatomic, strong) XMPPJID *jid;
-@property (nonatomic, strong) NSString *mailer;
+@property (nonatomic, strong, nullable) XMPPJID *jid;
+@property (nonatomic, strong, nullable) NSString *mailer;
 
-@property (nonatomic, strong) NSTimeZone *timeZone;
-@property (nonatomic, strong) CLLocation *location;
+@property (nonatomic, strong, nullable) NSTimeZone *timeZone;
+@property (nonatomic, strong, nullable) CLLocation *location;
 
-@property (nonatomic, strong) NSString *title;
-@property (nonatomic, strong) NSString *role;
-@property (nonatomic, strong) NSData *logo;
-@property (nonatomic, strong) XMPPvCardTemp *agent;
-@property (nonatomic, strong) NSString *orgName;
+@property (nonatomic, strong, nullable) NSString *title;
+@property (nonatomic, strong, nullable) NSString *role;
+@property (nonatomic, strong, nullable) NSData *logo;
+@property (nonatomic, strong, nullable) XMPPvCardTemp *agent;
+@property (nonatomic, strong, nullable) NSString *orgName;
 
 /*
  * ORGUNITs can only be set if there is already an ORGNAME. Otherwise, changes are ignored.
  */
-@property (nonatomic, strong) NSArray *orgUnits;
+@property (nonatomic, strong, nullable) NSArray<NSString*> *orgUnits;
 
-@property (nonatomic, strong) NSArray *categories;
-@property (nonatomic, strong) NSString *note;
-@property (nonatomic, strong) NSString *prodid;
-@property (nonatomic, strong) NSDate *revision;
-@property (nonatomic, strong) NSString *sortString;
-@property (nonatomic, strong) NSString *phoneticSound;
-@property (nonatomic, strong) NSData *sound;
-@property (nonatomic, strong) NSString *uid;
-@property (nonatomic, strong) NSString *url;
-@property (nonatomic, strong) NSString *version;
-@property (nonatomic, strong) NSString *desc;
+@property (nonatomic, strong, nullable) NSArray<NSString*> *categories;
+@property (nonatomic, strong, nullable) NSString *note;
+@property (nonatomic, strong, nullable) NSString *prodid;
+@property (nonatomic, strong, nullable) NSDate *revision;
+@property (nonatomic, strong, nullable) NSString *sortString;
+@property (nonatomic, strong, nullable) NSString *phoneticSound;
+@property (nonatomic, strong, nullable) NSData *sound;
+@property (nonatomic, strong, nullable) NSString *uid;
+@property (nonatomic, strong, nullable) NSString *url;
+@property (nonatomic, strong, nullable) NSString *version;
+@property (nonatomic, strong, nullable) NSString *desc;
 
 @property (nonatomic, assign) XMPPvCardTempClass privacyClass;
-@property (nonatomic, strong) NSData *key;
-@property (nonatomic, strong) NSString *keyType;
+@property (nonatomic, strong, nullable) NSData *key;
+@property (nonatomic, strong, nullable) NSString *keyType;
 
 + (XMPPvCardTemp *)vCardTempFromElement:(NSXMLElement *)element;
 + (XMPPvCardTemp *)vCardTemp;
-+ (XMPPvCardTemp *)vCardTempSubElementFromIQ:(XMPPIQ *)iq;
-+ (XMPPvCardTemp *)vCardTempCopyFromIQ:(XMPPIQ *)iq;
++ (nullable XMPPvCardTemp *)vCardTempSubElementFromIQ:(XMPPIQ *)iq;
++ (nullable XMPPvCardTemp *)vCardTempCopyFromIQ:(XMPPIQ *)iq;
 + (XMPPIQ *)iqvCardRequestForJID:(XMPPJID *)jid;
 
 
@@ -119,3 +119,4 @@ extern NSString *const kXMPPvCardTempElement;
 
 
 @end
+NS_ASSUME_NONNULL_END
