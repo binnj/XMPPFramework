@@ -60,6 +60,9 @@
 **/
 
 #import "CocoaLumberJack/DDLog.h"
+#undef LOG_INFO
+#undef LOG_DEBUG
+#import "DDLog.h"
 
 // Global flag to enable/disable logging throughout the entire xmpp framework.
 

@@ -50,7 +50,7 @@ NSString *const kXMPPvCardTempElement = @"vCard";
 		XMPPLogError(@"Adding instance variables to XMPPvCardTemp is not currently supported!");
 		
 		[DDLog flushLog];
-		exit(15);
+//		exit(15);
 	}
 }
 
@@ -172,14 +172,22 @@ NSString *const kXMPPvCardTempElement = @"vCard";
     }
 }
 
-
 - (NSString *)nickname {
-	return [[self elementForName:@"NICKNAME"] stringValue];
+    return [[self elementForName:@"NICKNAME"] stringValue];
 }
 
 
 - (void)setNickname:(NSString *)nick {
-	XMPP_VCARD_SET_STRING_CHILD(nick, @"NICKNAME");
+    XMPP_VCARD_SET_STRING_CHILD(nick, @"NICKNAME");
+}
+
+- (NSString *)photoURL {
+    return [[self elementForName:@"PHPTOURL"] stringValue];
+}
+
+
+- (void)setPhotoURL:(NSString *)photoURL {
+    XMPP_VCARD_SET_STRING_CHILD(photoURL, @"PHPTOURL");
 }
 
 
@@ -301,32 +309,131 @@ NSString *const kXMPPvCardTempElement = @"vCard";
 #pragma mark Delivery Addressing Types
 
 
-- (NSArray *)addresses { return nil; }
-- (void)addAddress:(XMPPvCardTempAdr *)adr { }
-- (void)removeAddress:(XMPPvCardTempAdr *)adr { }
-- (void)setAddresses:(NSArray *)adrs { }
-- (void)clearAddresses { }
+- (NSArray *)addresses {
+    NSArray* adrs=[self elementsForName:@"ADR"];
+    NSMutableArray* addresses=[[NSMutableArray alloc]init];
+    for (NSXMLElement* elm in adrs) {
+        if (elm != nil) {
+            XMPPvCardTempAdr* adr=[XMPPvCardTempAdr vCardAdrFromElement:elm];
+            [addresses addObject:adr];
+        }
+    }
+    return addresses.copy;
+}
+- (void)addAddress:(XMPPvCardTempAdr *)adr {
+    [self addChild:adr];
+}
+- (void)removeAddress:(XMPPvCardTempAdr *)adr {
+    [self removeChildAtIndex:[[self children] indexOfObject:adr]];
+}
+- (void)setAddresses:(NSArray *)adrs {
+    for (XMPPvCardTempAdr* adr in adrs) {
+        [self addChild:adr];
+    }
+}
+- (void)clearAddresses {
+    NSArray* adrs=[self elementsForName:@"ADR"];
+    for (NSXMLElement* elm in adrs) {
+        if (elm != nil) {
+            [self removeChildAtIndex:[[self children] indexOfObject:elm]];
+        }
+    }
+}
 
 
-- (NSArray *)labels { return nil; }
-- (void)addLabel:(XMPPvCardTempLabel *)label { }
-- (void)removeLabel:(XMPPvCardTempLabel *)label { }
-- (void)setLabels:(NSArray *)labels { }
-- (void)clearLabels { }
+- (NSArray *)labels {
+    NSArray* lbls=[self elementsForName:@"LABEL"];
+    NSMutableArray* labels=[[NSMutableArray alloc]init];
+    for (NSXMLElement* elm in lbls) {
+        if (elm != nil) {
+            XMPPvCardTempLabel* lbl=[XMPPvCardTempLabel vCardLabelFromElement:elm];
+            [labels addObject:lbl];
+        }
+    }
+    return labels.copy;
+}
+- (void)addLabel:(XMPPvCardTempLabel *)label {
+    [self addChild:label];
+}
+- (void)removeLabel:(XMPPvCardTempLabel *)label {
+    [self removeChildAtIndex:[[self children] indexOfObject:label]];
+}
+- (void)setLabels:(NSArray *)labels {
+    for (XMPPvCardTempLabel* label in labels) {
+        [self addChild:label];
+    }
+}
+- (void)clearLabels {
+    NSArray* lbls=[self elementsForName:@"LABEL"];
+    for (NSXMLElement* elm in lbls) {
+        if (elm != nil) {
+            [self removeChildAtIndex:[[self children] indexOfObject:elm]];
+        }
+    }
+}
 
 
-- (NSArray *)telecomsAddresses { return nil; }
-- (void)addTelecomsAddress:(XMPPvCardTempTel *)tel { }
-- (void)removeTelecomsAddress:(XMPPvCardTempTel *)tel { }
-- (void)setTelecomsAddresses:(NSArray *)tels { }
-- (void)clearTelecomsAddresses { }
+- (NSArray *)telecomsAddresses {
+    NSArray* telcoms=[self elementsForName:@"TEL"];
+    NSMutableArray* telecomsAddresses=[[NSMutableArray alloc]init];
+    for (NSXMLElement* elm in telcoms) {
+        if (elm != nil) {
+            XMPPvCardTempTel* tel=[XMPPvCardTempTel vCardTelFromElement:elm];
+            [telecomsAddresses addObject:tel];
+        }
+    }
+    return telecomsAddresses.copy;
+}
+- (void)addTelecomsAddress:(XMPPvCardTempTel *)tel {
+    [self addChild:tel];
+}
+- (void)removeTelecomsAddress:(XMPPvCardTempTel *)tel {
+    [self removeChildAtIndex:[[self children] indexOfObject:tel]];
+}
+- (void)setTelecomsAddresses:(NSArray *)tels {
+    for (XMPPvCardTempTel* tel in tels) {
+        [self addChild:tel];
+    }
+}
+- (void)clearTelecomsAddresses {
+    NSArray* tels=[self elementsForName:@"TEL"];
+    for (NSXMLElement* elm in tels) {
+        if (elm != nil) {
+            [self removeChildAtIndex:[[self children] indexOfObject:elm]];
+        }
+    } }
 
 
-- (NSArray *)emailAddresses { return nil; }
-- (void)addEmailAddress:(XMPPvCardTempEmail *)email { }
-- (void)removeEmailAddress:(XMPPvCardTempEmail *)email { }
-- (void)setEmailAddresses:(NSArray *)emails { }
-- (void)clearEmailAddresses { }
+- (NSArray *)emailAddresses {
+    NSArray* emails=[self elementsForName:@"EMAIL"];
+    NSMutableArray* emailAddresses=[[NSMutableArray alloc]init];
+    for (NSXMLElement* elm in emails) {
+        if (elm != nil) {
+            XMPPvCardTempEmail* email=[XMPPvCardTempEmail vCardEmailFromElement:elm];
+            [emailAddresses addObject:email];
+        }
+    }
+    return emailAddresses.copy;
+}
+- (void)addEmailAddress:(XMPPvCardTempEmail *)email {
+    [self addChild:email];
+}
+- (void)removeEmailAddress:(XMPPvCardTempEmail *)email {
+    [self removeChildAtIndex:[[self children] indexOfObject:email]];
+}
+- (void)setEmailAddresses:(NSArray *)emails {
+    for (XMPPvCardTempEmail* email in emails) {
+        [self addChild:email];
+    }
+}
+- (void)clearEmailAddresses {
+    NSArray* emails=[self elementsForName:@"EMAIL"];
+    for (NSXMLElement* elm in emails) {
+        if (elm != nil) {
+            [self removeChildAtIndex:[[self children] indexOfObject:elm]];
+        }
+    }
+}
 
 
 - (XMPPJID *)jid {

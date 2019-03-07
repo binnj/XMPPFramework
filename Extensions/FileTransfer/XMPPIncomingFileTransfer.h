@@ -75,6 +75,7 @@
 */
 - (void)xmppIncomingFileTransfer:(XMPPIncomingFileTransfer *)sender
               didSucceedWithData:(NSData *)data
-                           named:(NSString *)name;
+                           named:(NSString *)name
+                           sender:(NSString *)senderJID;
 
 @end

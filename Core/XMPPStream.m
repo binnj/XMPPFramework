@@ -2445,6 +2445,10 @@ enum XMPPStreamConfig
 	[multicastDelegate xmppStream:self didSendMessage:message];
 }
 
+- (void)callDidSendMessage:(XMPPMessage *)message {
+    [multicastDelegate xmppStream:self didSendMessage:message];
+}
+
 - (void)continueSendPresence:(XMPPPresence *)presence withTag:(long)tag
 {
 	NSAssert(dispatch_get_specific(xmppQueueTag), @"Invoked on incorrect queue");
@@ -4483,6 +4487,9 @@ enum XMPPStreamConfig
 
 - (void)xmppParser:(XMPPParser *)sender didReadElement:(NSXMLElement *)element
 {
+    // SCC: 20180821: Haven't looked where this NSLog came from yet; far too verbose and XMPPLogRecvPost is available instead..
+    // NSLog(@"%@", element);
+    
 	// This method is invoked on the xmppQueue.
 	
 	if (sender != parser) return;

@@ -13,6 +13,8 @@ static NSString *const XMPPMUCNamespace      = @"http://jabber.org/protocol/muc"
 static NSString *const XMPPMUCUserNamespace  = @"http://jabber.org/protocol/muc#user";
 static NSString *const XMPPMUCAdminNamespace = @"http://jabber.org/protocol/muc#admin";
 static NSString *const XMPPMUCOwnerNamespace = @"http://jabber.org/protocol/muc#owner";
+static NSString *const XMPPMUCDiscoInfo = @"http://jabber.org/protocol/disco#info";
+static NSString *const XMPPMUCDiscoItems = @"http://jabber.org/protocol/disco#items";
 
 
 @interface XMPPRoom : XMPPModule
@@ -70,6 +72,10 @@ static NSString *const XMPPMUCOwnerNamespace = @"http://jabber.org/protocol/muc#
 @property (readonly) NSString *roomSubject;
 
 @property (readonly) BOOL isJoined;
+
+@property (nonatomic,strong) NSXMLElement* roomConfigForm;
+
+@property (nonatomic) BOOL roomConfigHasChanged;
 
 #pragma mark Room Lifecycle
 
@@ -136,6 +142,12 @@ static NSString *const XMPPMUCOwnerNamespace = @"http://jabber.org/protocol/muc#
 - (void)fetchBanList;
 - (void)fetchMembersList;
 - (void)fetchModeratorsList;
+- (void)fetchAdminsList;
+- (void)fetchOwnersList;
+
+- (void)fetchRoomInfoForRoomJid:(XMPPJID*) roomJid;
+- (void)fetchRoomItemsForRoomJid:(XMPPJID*) roomJid;
+- (void)fetchPublicRooms;
 
 /**
  * The ban list, member list, and moderator list are simply subsets of the room privileges list.
@@ -288,10 +300,11 @@ static NSString *const XMPPMUCOwnerNamespace = @"http://jabber.org/protocol/muc#
 - (void)xmppRoomDidDestroy:(XMPPRoom *)sender;
 - (void)xmppRoom:(XMPPRoom *)sender didFailToDestroy:(XMPPIQ *)iqError;
 
-
 - (void)xmppRoom:(XMPPRoom *)sender occupantDidJoin:(XMPPJID *)occupantJID withPresence:(XMPPPresence *)presence;
 - (void)xmppRoom:(XMPPRoom *)sender occupantDidLeave:(XMPPJID *)occupantJID withPresence:(XMPPPresence *)presence;
 - (void)xmppRoom:(XMPPRoom *)sender occupantDidUpdate:(XMPPJID *)occupantJID withPresence:(XMPPPresence *)presence;
+
+- (void)xmppRoom:(XMPPRoom *)sender roomSubjectDidChange:(NSString*)roomSubject;
 
 /**
  * Invoked when a message is received.
@@ -305,8 +318,23 @@ static NSString *const XMPPMUCOwnerNamespace = @"http://jabber.org/protocol/muc#
 - (void)xmppRoom:(XMPPRoom *)sender didFetchMembersList:(NSArray *)items;
 - (void)xmppRoom:(XMPPRoom *)sender didNotFetchMembersList:(XMPPIQ *)iqError;
 
+- (void)xmppRoom:(XMPPRoom *)sender didFetchOwnersList:(NSArray *)items;
+- (void)xmppRoom:(XMPPRoom *)sender didNotFetchOwnersList:(XMPPIQ *)iqError;
+
+- (void)xmppRoom:(XMPPRoom *)sender didFetchAdminsList:(NSArray *)items;
+- (void)xmppRoom:(XMPPRoom *)sender didNotFetchAdminsList:(XMPPIQ *)iqError;
+
 - (void)xmppRoom:(XMPPRoom *)sender didFetchModeratorsList:(NSArray *)items;
 - (void)xmppRoom:(XMPPRoom *)sender didNotFetchModeratorsList:(XMPPIQ *)iqError;
+
+- (void)xmppRoom:(XMPPRoom *)sender didFetchRoomInfo:(XMPPIQ *)items;
+- (void)xmppRoom:(XMPPRoom *)sender didNotFetchRoomInfo:(XMPPIQ *)iqError;
+
+- (void)xmppRoom:(XMPPRoom *)sender didFetchRoomItems:(NSArray *)items;
+- (void)xmppRoom:(XMPPRoom *)sender didNotFetchRoomItems:(XMPPIQ *)iqError;
+
+- (void)xmppRoom:(XMPPRoom *)sender didFetchPublicRooms:(NSArray *)items;
+- (void)xmppRoom:(XMPPRoom *)sender didNotFetchPublicRooms:(XMPPIQ *)iqError;
 
 - (void)xmppRoom:(XMPPRoom *)sender didEditPrivileges:(XMPPIQ *)iqResult;
 - (void)xmppRoom:(XMPPRoom *)sender didNotEditPrivileges:(XMPPIQ *)iqError;

@@ -50,6 +50,11 @@
 }
 
 #endif
+- (id) init
+{
+    return [self initWithName:@"TEL"];
+}
+
 
 + (XMPPvCardTempTel *)vCardTelFromElement:(NSXMLElement *)elem {
 	object_setClass(elem, [XMPPvCardTempTel class]);

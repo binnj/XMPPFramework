@@ -50,6 +50,10 @@
 }
 
 #endif
+- (id) init
+{
+    return [self initWithName:@"LABEL"];
+}
 
 + (XMPPvCardTempLabel *)vCardLabelFromElement:(NSXMLElement *)elem {
 	object_setClass(elem, [XMPPvCardTempLabel class]);

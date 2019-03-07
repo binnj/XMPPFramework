@@ -16,6 +16,7 @@
 @interface XMPPvCardTempAdr : XMPPvCardTempAdrTypes
 
 + (XMPPvCardTempAdr *)vCardAdrFromElement:(NSXMLElement *)elem;
+- (id) init;
 
 @property (nonatomic, weak) NSString *pobox;
 @property (nonatomic, weak) NSString *extendedAddress;

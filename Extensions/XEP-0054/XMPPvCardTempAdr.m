@@ -51,6 +51,10 @@
 }
 
 #endif
+- (id) init
+{
+    return [self initWithName:@"ADR"];
+}
 
 + (XMPPvCardTempAdr *)vCardAdrFromElement:(NSXMLElement *)elem {
 	object_setClass(elem, [XMPPvCardTempAdr class]);

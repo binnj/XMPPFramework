@@ -50,6 +50,10 @@
 }
 
 #endif
+- (id) init
+{
+    return [self initWithName:@"EMAIL"];
+}
 
 + (XMPPvCardTempEmail *)vCardEmailFromElement:(NSXMLElement *)elem {
 	object_setClass(elem, [XMPPvCardTempEmail class]);

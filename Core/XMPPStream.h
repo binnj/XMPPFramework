@@ -630,6 +630,7 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
  * Using this method guarantees everything is done as an atomic operation.
 **/
 - (void)resendMyPresence;
+- (void)callDidSendMessage:(XMPPMessage *)message;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark Stanza Validation

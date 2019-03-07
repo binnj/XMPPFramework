@@ -342,6 +342,7 @@ enum XMPPRoomState
 		
 		NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMUCOwnerNamespace];
 		NSXMLElement *x = [query elementForName:@"x" xmlns:@"jabber:x:data"];
+        self.roomConfigForm = x.copy;
 		
 		[multicastDelegate xmppRoom:self didFetchConfigurationForm:x];
 	}
@@ -619,8 +620,130 @@ enum XMPPRoomState
 		block();
 	else
 		dispatch_async(moduleQueue, block);
-	
-	
+}
+
+- (void)handleFetchOwnersListResponse:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
+{
+    if ([[iq type] isEqualToString:@"result"])
+    {
+        // <iq type='result'
+        //     from='coven@chat.shakespeare.lit'
+        //       id='member3'>
+        //   <query xmlns='http://jabber.org/protocol/muc#admin'>
+        //     <item affiliation='owner' jid='hag66@shakespeare.lit' nick='thirdwitch' role='moderator'/>
+        //   </query>
+        // </iq>
+        
+        NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMUCAdminNamespace];
+        NSArray *items = [query elementsForName:@"item"];
+        
+        [multicastDelegate xmppRoom:self didFetchOwnersList:items];
+    }
+    else
+    {
+        [multicastDelegate xmppRoom:self didNotFetchOwnersList:iq];
+    }
+}
+
+- (void)fetchOwnersList
+{
+    dispatch_block_t block = ^{ @autoreleasepool {
+        
+        XMPPLogTrace();
+        
+        // <iq type='get'
+        //       id='member3'
+        //       to='coven@chat.shakespeare.lit'>
+        //   <query xmlns='http://jabber.org/protocol/muc#admin'>
+        //     <item affiliation='owner'/>
+        //   </query>
+        // </iq>
+        
+        NSString *fetchID = [xmppStream generateUUID];
+        
+        NSXMLElement *item = [NSXMLElement elementWithName:@"item"];
+        [item addAttributeWithName:@"affiliation" stringValue:@"owner"];
+        
+        NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:XMPPMUCAdminNamespace];
+        [query addChild:item];
+        
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"get" to:roomJID elementID:fetchID child:query];
+        
+        [xmppStream sendElement:iq];
+        
+        [responseTracker addID:fetchID
+                        target:self
+                      selector:@selector(handleFetchOwnersListResponse:withInfo:)
+                       timeout:60.0];
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+}
+
+- (void)handleFetchAdminsListResponse:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
+{
+    if ([[iq type] isEqualToString:@"result"])
+    {
+        // <iq type='result'
+        //     from='coven@chat.shakespeare.lit'
+        //       id='member3'>
+        //   <query xmlns='http://jabber.org/protocol/muc#admin'>
+        //     <item affiliation='admin' jid='hag66@shakespeare.lit' nick='thirdwitch' role='moderator'/>
+        //   </query>
+        // </iq>
+        
+        NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMUCAdminNamespace];
+        NSArray *items = [query elementsForName:@"item"];
+        
+        [multicastDelegate xmppRoom:self didFetchAdminsList:items];
+    }
+    else
+    {
+        [multicastDelegate xmppRoom:self didNotFetchAdminsList:iq];
+    }
+}
+
+- (void)fetchAdminsList
+{
+    dispatch_block_t block = ^{ @autoreleasepool {
+        
+        XMPPLogTrace();
+        
+        // <iq type='get'
+        //       id='member3'
+        //       to='coven@chat.shakespeare.lit'>
+        //   <query xmlns='http://jabber.org/protocol/muc#admin'>
+        //     <item affiliation='admin'/>
+        //   </query>
+        // </iq>
+        
+        NSString *fetchID = [xmppStream generateUUID];
+        
+        NSXMLElement *item = [NSXMLElement elementWithName:@"item"];
+        [item addAttributeWithName:@"affiliation" stringValue:@"admin"];
+        
+        NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:XMPPMUCAdminNamespace];
+        [query addChild:item];
+        
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"get" to:roomJID elementID:fetchID child:query];
+        
+        [xmppStream sendElement:iq];
+        
+        [responseTracker addID:fetchID
+                        target:self
+                      selector:@selector(handleFetchAdminsListResponse:withInfo:)
+                       timeout:60.0];
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+    
+    
 }
 
 - (void)handleFetchModeratorsListResponse:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
@@ -683,6 +806,186 @@ enum XMPPRoomState
 		dispatch_async(moduleQueue, block);
 }
 
+- (void)handleFetchRoomInfoResponse:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
+{
+    if ([[iq type] isEqualToString:@"result"])
+    {
+        //        <iq from='coven@chat.shakespeare.lit'
+        //            id='ik3vs715'
+        //            to='hag66@shakespeare.lit/pda'
+        //            type='result'>
+        //          <query xmlns='http://jabber.org/protocol/disco#info'>
+        //            <identity
+        //                category='conference'
+        //                name='A Dark Cave'
+        //                type='text'/>
+        //            <feature var='http://jabber.org/protocol/muc'/>
+        //            <feature var='muc_passwordprotected'/>
+        //            <feature var='muc_hidden'/>
+        //            <feature var='muc_temporary'/>
+        //            <feature var='muc_open'/>
+        //            <feature var='muc_unmoderated'/>
+        //            <feature var='muc_nonanonymous'/>
+        //          </query>
+        //        </iq>
+        
+        
+        [multicastDelegate xmppRoom:self didFetchRoomInfo:iq];
+    }
+    else
+    {
+        [multicastDelegate xmppRoom:self didNotFetchRoomInfo:iq];
+    }
+}
+
+- (void)fetchRoomInfoForRoomJid:(XMPPJID*) roomJid
+{
+    dispatch_block_t block = ^{ @autoreleasepool {
+        
+        // <iq type='get'
+        //       id='mod3'
+        //       to='coven@chat.shakespeare.lit'>
+        //   <query xmlns='http://jabber.org/protocol/disco#info'/>
+        // </iq>
+        
+        NSString *fetchID = [xmppStream generateUUID];
+        
+        NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:XMPPMUCDiscoInfo];
+        
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"get" to:roomJid elementID:fetchID child:query];
+        
+        [xmppStream sendElement:iq];
+        
+        [responseTracker addID:fetchID
+                        target:self
+                      selector:@selector(handleFetchRoomInfoResponse:withInfo:)
+                       timeout:60.0];
+        
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+}
+
+- (void)handleFetchRoomItemsResponse:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
+{
+    if ([[iq type] isEqualToString:@"result"])
+    {
+        //        <iq from='coven@chat.shakespeare.lit'
+        //            id='kl2fax27'
+        //            to='hag66@shakespeare.lit/pda'
+        //            type='result'>
+        //          <query xmlns='http://jabber.org/protocol/disco#items'>
+        //            <item jid='coven@chat.shakespeare.lit/firstwitch' name="firstwitch"/>
+        //            <item jid='coven@chat.shakespeare.lit/secondwitch' name="secondwitch"/>
+        //          </query>
+        //        </iq>
+        
+        NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMUCDiscoItems];
+        NSArray *items = [query elementsForName:@"item"];
+        [multicastDelegate xmppRoom:self didFetchRoomItems:items];
+    }
+    else
+    {
+        [multicastDelegate xmppRoom:self didNotFetchRoomItems:iq];
+    }
+}
+
+- (void)fetchRoomItemsForRoomJid:(XMPPJID*) roomJid
+{
+    dispatch_block_t block = ^{ @autoreleasepool {
+        
+        // <iq type='get'
+        //       id='mod3'
+        //       to='coven@chat.shakespeare.lit'>
+        //   <query xmlns='http://jabber.org/protocol/disco#items'/>
+        // </iq>
+        
+        NSString *fetchID = [xmppStream generateUUID];
+        
+        NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:XMPPMUCDiscoItems];
+        
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"get" to:roomJid elementID:fetchID child:query];
+        
+        [xmppStream sendElement:iq];
+        
+        [responseTracker addID:fetchID
+                        target:self
+                      selector:@selector(handleFetchRoomItemsResponse:withInfo:)
+                       timeout:60.0];
+        
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+}
+
+- (void)handleFetchPublicRooms:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
+{
+    if ([[iq type] isEqualToString:@"result"])
+    {
+        //    <iq from='chat.shakespeare.lit'
+        //        id='zb8q41f4'
+        //        to='hag66@shakespeare.lit/pda'
+        //        type='result'>
+        //      <query xmlns='http://jabber.org/protocol/disco#items'>
+        //        <item jid='heath@chat.shakespeare.lit'
+        //              name='A Lonely Heath'/>
+        //        <item jid='coven@chat.shakespeare.lit'
+        //              name='A Dark Cave'/>
+        //        <item jid='forres@chat.shakespeare.lit'
+        //              name='The Palace'/>
+        //        <item jid='inverness@chat.shakespeare.lit'
+        //              name='Macbeth&apos;s Castle'/>
+        //      </query>
+        //    </iq>
+        
+        NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMUCDiscoItems];
+        NSArray *items = [query elementsForName:@"item"];
+        [multicastDelegate xmppRoom:self didFetchPublicRooms:items];
+    }
+    else
+    {
+        [multicastDelegate xmppRoom:self didNotFetchPublicRooms:iq];
+    }
+}
+
+- (void)fetchPublicRooms
+{
+    dispatch_block_t block = ^{ @autoreleasepool {
+        
+        //    <iq from='hag66@shakespeare.lit/pda'
+        //        id='zb8q41f4'
+        //        to='chat.shakespeare.lit'
+        //        type='get'>
+        //      <query xmlns='http://jabber.org/protocol/disco#items'/>
+        //    </iq>
+        
+        NSString *fetchID = [xmppStream generateUUID];
+        
+        NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:XMPPMUCDiscoItems];
+        
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"get" to:[XMPPJID jidWithString:roomJID.domain] elementID:fetchID child:query];
+        
+        [xmppStream sendElement:iq];
+        
+        [responseTracker addID:fetchID
+                        target:self
+                      selector:@selector(handleFetchPublicRooms:withInfo:)
+                       timeout:60.0];
+        
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+}
+
 - (void)handleEditRoomPrivilegesResponse:(XMPPIQ *)iq withInfo:(id <XMPPTrackingInfo>)info
 {
 	if ([[iq type] isEqualToString:@"result"])
@@ -740,7 +1043,6 @@ enum XMPPRoomState
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark Leave & Destroy
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 - (void)leaveRoom
 {
 	dispatch_block_t block = ^{ @autoreleasepool {
@@ -1090,6 +1392,7 @@ enum XMPPRoomState
     else if ([message isGroupChatMessageWithSubject])
     {
         roomSubject = [message subject];
+        [multicastDelegate xmppRoom:self roomSubjectDidChange:roomSubject];
     }
 	else
 	{

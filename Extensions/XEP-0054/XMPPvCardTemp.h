@@ -44,6 +44,7 @@ extern NSString *const kXMPPvCardTempElement;
 
 @property (nonatomic, strong) NSDate *bday;
 @property (nonatomic, strong) NSData *photo;
+@property (nonatomic, strong) NSString *photoURL;
 @property (nonatomic, strong) NSString *nickname;
 @property (nonatomic, strong) NSString *formattedName;
 @property (nonatomic, strong) NSString *familyName;
