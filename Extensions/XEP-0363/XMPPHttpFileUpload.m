@@ -19,23 +19,6 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 #define XMLNS_XMPP_HTTP_FILE_UPLOAD @"urn:xmpp:http:upload"
 NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
 
-// XMPP Incoming File Upload State
-typedef NS_ENUM(int, XMPPHttpFileUploadStatus) {
-    XMPPHttpFileUploadStatusNone,
-    XMPPHttpFileUploadStatusServiceRequestedSent,
-    XMPPHttpFileUploadStatusServiceRequested,
-    XMPPHttpFileUploadStatusHasService,
-    XMPPHttpFileUploadStatusNoService,
-    XMPPHttpFileUploadStatusUploadServiceRequestedSent,
-    XMPPHttpFileUploadStatusUploadServiceRequested,
-    XMPPHttpFileUploadStatusHasUploadService,
-    XMPPHttpFileUploadStatusNoUploadService,
-    XMPPHttpFileUploadStatusUploadSlotRequestedSent,
-    XMPPHttpFileUploadStatusUploadSlotRequested,
-    XMPPHttpFileUploadStatusNoUploadSlot,
-    XMPPHttpFileUploadStatusCompleted
-};
-
 @class XMPPIDTracker;
 
 @interface XMPPHttpFileUpload()

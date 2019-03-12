@@ -8,6 +8,23 @@
 
 #import <Foundation/Foundation.h>
 
+// XMPP Incoming File Upload State
+typedef NS_ENUM(int, XMPPHttpFileUploadStatus) {
+    XMPPHttpFileUploadStatusNone,
+    XMPPHttpFileUploadStatusServiceRequestedSent,
+    XMPPHttpFileUploadStatusServiceRequested,
+    XMPPHttpFileUploadStatusHasService,
+    XMPPHttpFileUploadStatusNoService,
+    XMPPHttpFileUploadStatusUploadServiceRequestedSent,
+    XMPPHttpFileUploadStatusUploadServiceRequested,
+    XMPPHttpFileUploadStatusHasUploadService,
+    XMPPHttpFileUploadStatusNoUploadService,
+    XMPPHttpFileUploadStatusUploadSlotRequestedSent,
+    XMPPHttpFileUploadStatusUploadSlotRequested,
+    XMPPHttpFileUploadStatusNoUploadSlot,
+    XMPPHttpFileUploadStatusCompleted
+};
+
 @interface XMPPHttpFileUploadObject : NSObject
 
 @property (nonatomic,strong) NSString* recipientJid;
@@ -18,6 +35,7 @@
 @property (nonatomic,strong) NSString* contentType;
 @property (nonatomic,strong) NSURL* getURL;
 @property (nonatomic,strong) NSURL* putURL;
-@property (nonatomic) int status;
+@property (nonatomic) XMPPHttpFileUploadStatus status;
+
 
 @end
