@@ -271,10 +271,10 @@ NSString *const XMPPFileUploadErrorDomain = @"XMPPFileUploadErrorDomain";
     NSXMLElement* request = [NSXMLElement elementWithName:@"request" xmlns:XMLNS_XMPP_HTTP_FILE_UPLOAD];
     NSXMLElement* filename = [NSXMLElement elementWithName:@"filename" stringValue:httpFileUploadObj.fileName];
     NSXMLElement* filesize = [NSXMLElement elementWithName:@"size" stringValue:[NSString stringWithFormat:@"%ld",httpFileUploadObj.fileSize]];
-    NSXMLElement* contenttype = [NSXMLElement elementWithName:@"content-type" stringValue:httpFileUploadObj.contentType];
+    NSXMLElement* contentType = [NSXMLElement elementWithName:@"content-type" stringValue:httpFileUploadObj.contentType];
     [request addChild:filename];
     [request addChild:filesize];
-    [request addChild:contenttype];
+    [request addChild:contentType];
     
     XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
                                  to:[XMPPJID jidWithString:toStr]
