@@ -30,9 +30,9 @@
 @property (readonly, strong) id <XMPPMessageArchivingManagementStorage> xmppMessageArchivingManagementStorage;
 @property (readwrite, copy) NSXMLElement *preferences;
 
-- (NSDate *)dateOfLastSync;
-- (void) syncLocalMessageArchiveWithServerMessageArchive;
-- (void) syncLocalMessageArchiveWithServerMessageArchiveWithBareJid: (NSString*)withBareJid startTime:(NSDate*)startTime endTime:(NSDate*)endTime maxResultNumber: (NSInteger*)maxResultNumber;
+- (NSDate *)lastSyncDateForUser:(NSString *)userBareJid;
+- (void)syncLocalMessageArchiveWithServerMessageArchive;
+- (void)syncLocalMessageArchiveWithServerMessageArchiveWithBareJid:(NSString *)withBareJid startTime:(NSDate *)startTime endTime:(NSDate *)endTime;
 
 @end
 

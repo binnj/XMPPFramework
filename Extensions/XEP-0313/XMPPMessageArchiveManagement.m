@@ -28,7 +28,10 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
 @interface XMPPMessageArchiveManagement()
 {
     XMPPMessageArchiveSyncState _syncState;
-    NSString* syncId;
+    NSString *_syncId;
+    NSString *_userBareJid;
+    NSDate *_syncStartDate;
+    NSDate *_syncEndDate;
 }
 
 @end
@@ -131,7 +134,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     
     dispatch_block_t block = ^{
         
-        result = [preferences copy];
+        result = [self->preferences copy];
     };
     
     if (dispatch_get_specific(moduleQueueTag))
@@ -149,22 +152,22 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         // Update cached value
         
         // Update preferences only if it has changed
-        if (![newPreferences.XMLString isEqualToString:preferences.XMLString]) {
+        if (![newPreferences.XMLString isEqualToString:self->preferences.XMLString]) {
             
-            preferences = [newPreferences copy];
+            self->preferences = [newPreferences copy];
             
             // Update storage
             
-            if ([xmppMessageArchivingManagementStorage respondsToSelector:@selector(setPreferences:forUser:)])
+            if ([self->xmppMessageArchivingManagementStorage respondsToSelector:@selector(setPreferences:forUser:)])
             {
-                XMPPJID *myBareJid = [[xmppStream myJID] bareJID];
+                XMPPJID *myBareJid = [[self->xmppStream myJID] bareJID];
                 
-                [xmppMessageArchivingManagementStorage setPreferences:preferences forUser:myBareJid];
+                [self->xmppMessageArchivingManagementStorage setPreferences:self->preferences forUser:myBareJid];
             }
             
             //  - Send new pref to server
-            XMPPIQ *iq = [XMPPIQ iqWithType:@"set" to:nil elementID:nil child:preferences];
-            [xmppStream sendElement:iq];
+            XMPPIQ *iq = [XMPPIQ iqWithType:@"set" to:nil elementID:nil child:self->preferences];
+            [self->xmppStream sendElement:iq];
         }
         
     }};
@@ -214,31 +217,11 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
 {
     NSString *type = [iq type];
     
-    if ([type isEqualToString:@"result"])
+    if ([type isEqualToString:@"result"] && [iq elementForName:@"fin" xmlns:XMLNS_XMPP_ARCHIVE])
     {
-        NSXMLElement *pref = [iq elementForName:@"prefs" xmlns:XMLNS_XMPP_ARCHIVE];
-        NSXMLElement *fin = [iq elementForName:@"fin" xmlns:XMLNS_XMPP_ARCHIVE];
-        if (pref)
-        {
-            [self setPreferences:pref];
-        }
-        if (fin) {
-            _syncState = XMPPMessageArchiveSyncStateNone;
-            if([[[fin attributeForName:@"complete"] stringValue] isEqualToString:@"true"])
-            {
-                [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
-                NSString* kLastSyncDate = [NSString stringWithFormat:@"LastSyncDate_%@",xmppStream.myJID.bare];
-                [[NSUserDefaults standardUserDefaults] setObject:[NSDate date] forKey:kLastSyncDate];
-            }
-            else
-            {
-                NSXMLElement *set = [fin elementForName:@"set"];
-                double timestamp = [[set elementForName:@"last"] stringValueAsDouble];
-                NSDate *date = [NSDate dateWithTimeIntervalSince1970:(timestamp / 1000000.0)];
-                NSInteger max = 250;
-                [self fetchArchivedMessagesWithBareJid:nil startTime:date endTime:nil maxResultNumber:&max];
-            }
-        }
+        _syncState = XMPPMessageArchiveSyncStateNone;
+        [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
+        [self setSyncFromDate:_syncStartDate forUser:_userBareJid];
     }
     return NO;
 }
@@ -255,7 +238,7 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
 
 - (void)xmppStream:(XMPPStream *)sender didSendIQ:(XMPPIQ *)iq
 {
-    if (syncId && [[iq elementID] isEqualToString:syncId]) {
+    if (_syncId && [[iq elementID] isEqualToString:_syncId]) {
         _syncState = XMPPMessageArchiveSyncStateWaitingForSyncResponse;
         [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidStarted];
         
@@ -293,19 +276,17 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     //        <no-copy xmlns="urn:xmpp:hints"/>
     //    </message>
     
-    if (_syncState == XMPPMessageArchiveSyncStateWaitingForSyncResponse || _syncState == XMPPMessageArchiveSyncStateSyncing) {
-        if ([message elementsForName:@"result"].count > 0) {
-            NSXMLElement* result = [[message elementsForName:@"result"] firstObject];
-            if ([result xmlns] && [[result xmlns] isEqualToString:XMLNS_XMPP_ARCHIVE]) {
-                _syncState = XMPPMessageArchiveSyncStateSyncing;
-                return YES;
-            }
+    if ([message elementsForName:@"result"].count > 0) {
+        NSXMLElement* result = [[message elementsForName:@"result"] firstObject];
+        if ([result xmlns] && [[result xmlns] isEqualToString:XMLNS_XMPP_ARCHIVE]) {
+            return YES;
         }
-        else if ([message elementsForName:@"fin"] && [[[[message elementsForName:@"fin"] firstObject] xmlns] isEqualToString:XMLNS_XMPP_ARCHIVE])
-        {
-            _syncState = XMPPMessageArchiveSyncStateNone;
-            [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
-        }
+    }
+    else if ([message elementsForName:@"fin"] && [[[[message elementsForName:@"fin"] firstObject] xmlns] isEqualToString:XMLNS_XMPP_ARCHIVE])
+    {
+        _syncState = XMPPMessageArchiveSyncStateNone;
+        [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
+        [self setSyncFromDate:_syncStartDate forUser:_userBareJid];
     }
     return NO;
 }
@@ -345,27 +326,34 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     return NO;
 }
 
-- (NSDate *) dateOfLastSync
+- (NSDate *)lastSyncDateForUser:(NSString *)userBareJid
 {
-    NSString* kLastSyncDate = [NSString stringWithFormat:@"LastSyncDate_%@",xmppStream.myJID.bare];
+    NSString *forUser = userBareJid ? [NSString stringWithFormat:@"_%@", userBareJid] : @"";
+    NSString* kLastSyncDate = [NSString stringWithFormat:@"LastSyncDate_%@%@", xmppStream.myJID.bare, forUser];
     return [[NSUserDefaults standardUserDefaults] objectForKey:kLastSyncDate];
+}
+
+- (void)setSyncFromDate:(NSDate *)syncDate forUser:(NSString *)userBareJid
+{
+    NSString *forUser = userBareJid ? [NSString stringWithFormat:@"_%@", userBareJid] : @"";
+    NSString* kLastSyncDate = [NSString stringWithFormat:@"LastSyncDate_%@%@", xmppStream.myJID.bare, forUser];
+    [[NSUserDefaults standardUserDefaults] setObject:syncDate forKey:kLastSyncDate];
 }
 
 - (void) syncLocalMessageArchiveWithServerMessageArchive
 {
-    [self syncLocalMessageArchiveWithServerMessageArchiveWithBareJid:nil startTime:nil endTime:nil maxResultNumber:nil];
+    [self syncLocalMessageArchiveWithServerMessageArchiveWithBareJid:nil startTime:nil endTime:nil];
 }
 
-- (void) syncLocalMessageArchiveWithServerMessageArchiveWithBareJid: (NSString*)withBareJid startTime:(NSDate*)startTime endTime:(NSDate*)endTime maxResultNumber: (NSInteger*)maxResultNumber
+- (void) syncLocalMessageArchiveWithServerMessageArchiveWithBareJid:(NSString*)withBareJid startTime:(NSDate*)startTime endTime:(NSDate*)endTime
 {
-    [self fetchArchivedMessagesWithBareJid:withBareJid startTime:startTime endTime:endTime maxResultNumber:maxResultNumber];
+    [self fetchArchivedMessagesWithBareJid:withBareJid startTime:startTime endTime:endTime];
 }
 
-- (void) fetchArchivedMessagesWithBareJid: (NSString*)withBareJid startTime:(NSDate*)startTime endTime:(NSDate*)endTime maxResultNumber: (NSInteger*)maxResultNumber
+- (void) fetchArchivedMessagesWithBareJid: (NSString*)withBareJid startTime:(NSDate*)startTime endTime:(NSDate*)endTime
 {
     if (_syncState == XMPPMessageArchiveSyncStateNone) {
         XMPPLogTrace();
-        
         //        <iq type='set' id='q29302'>
         //          <query xmlns='urn:xmpp:mam:1'>
         //            <x xmlns='jabber:x:data' type='submit'>
@@ -388,20 +376,18 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
         //          </query>
         //        </iq>
         
-        NSString* startTimeStr = @"";
-        NSString* endTimeStr = @"";
-        NSString* maxResultNumberStr = @"";
-        if (startTime) startTimeStr = [startTime xmppDateTimeString];
-        if (endTimeStr)  endTimeStr = [endTime xmppDateTimeString];
-        if (maxResultNumberStr)  maxResultNumberStr = [NSString stringWithFormat:@"%ld",(long)maxResultNumber];
+        _syncId = [xmppStream generateUUID];
+        _userBareJid = withBareJid;
+        _syncEndDate = endTime;
+        _syncStartDate = startTime;
+        NSString *startTimeStr = startTime ? [startTime xmppDateTimeString] : @"";
+        NSString *endTimeStr = endTime ? [endTime xmppDateTimeString] : @"";
         
-        syncId = [xmppStream generateUUID];
-        
-        // creating x item
         NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:XMLNS_XMPP_ARCHIVE];
         [query addAttribute:[DDXMLNode attributeWithName:@"queryid" stringValue:[xmppStream generateUUID]]];
         
-        if (withBareJid || startTime || endTime) {
+        // creating x item
+        if (withBareJid.length > 0 || startTimeStr.length > 0 || endTimeStr.length > 0) {
             NSXMLElement *x = [NSXMLElement elementWithName:@"x" xmlns:@"jabber:x:data"];
             [x addAttributeWithName:@"type" stringValue:@"submit"];
             
@@ -414,21 +400,21 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
             [field addChild:value];
             [x addChild:field];
             
-            if (withBareJid && ![withBareJid isEqualToString:@""]) {
+            if (withBareJid.length > 0) {
                 NSXMLElement *field = [NSXMLElement elementWithName:@"field"];
                 [field addAttributeWithName:@"var" stringValue:@"with"];
                 NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:withBareJid];
                 [field addChild:value];
                 [x addChild:field];
             }
-            if (startTimeStr && ![startTimeStr isEqualToString:@""]) {
+            if (startTimeStr.length > 0) {
                 NSXMLElement *field = [NSXMLElement elementWithName:@"field"];
                 [field addAttributeWithName:@"var" stringValue:@"start"];
                 NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:startTimeStr];
                 [field addChild:value];
                 [x addChild:field];
             }
-            if (endTimeStr && ![endTimeStr isEqualToString:@""]) {
+            if (endTimeStr.length > 0) {
                 NSXMLElement *field = [NSXMLElement elementWithName:@"field"];
                 [field addAttributeWithName:@"var" stringValue:@"end"];
                 NSXMLElement *value = [NSXMLElement elementWithName:@"value" stringValue:endTimeStr];
@@ -437,25 +423,9 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
             }
             
             [query addChild:x];
-            
-            if (maxResultNumber && maxResultNumber > 0) {
-                NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
-                NSXMLElement *max = [NSXMLElement elementWithName:@"max" stringValue:maxResultNumberStr];
-                [set addChild:max];
-                [query addChild:set];
-            }
-        }
-        else
-        {
-            NSXMLElement *set = [NSXMLElement elementWithName:@"set" xmlns:@"http://jabber.org/protocol/rsm"];
-            NSXMLElement *max = [NSXMLElement elementWithName:@"max" numberValue:@(50)];
-            [set addChild:max];
-            NSXMLElement *beforeElement = [NSXMLElement elementWithName:@"before"];
-            [set addChild:beforeElement];
-            [query addChild:set];
         }
         
-        XMPPIQ *iq = [XMPPIQ iqWithType:@"set" elementID:syncId child:query];
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"set" elementID:_syncId child:query];
         [xmppStream sendElement:iq];
     }
     else
