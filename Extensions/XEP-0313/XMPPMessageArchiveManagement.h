@@ -115,5 +115,5 @@
 /**
  * Implement this method to receive notifications of end of sync
  */
-- (void)syncLocalMessageArchiveWithServerMessageArchiveDidFinished;
+- (void)syncLocalMessageArchiveWithServerMessageArchiveDidFinishedWithCount:(NSInteger)count;
 @end

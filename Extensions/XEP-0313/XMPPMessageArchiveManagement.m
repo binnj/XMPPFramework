@@ -17,6 +17,7 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 #endif
 
 #define XMLNS_XMPP_ARCHIVE @"urn:xmpp:mam:1"
+#define XMLNS_XMPP_RSM @"http://jabber.org/protocol/rsm"
 
 // XMPP Incoming File Transfer State
 typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
@@ -215,12 +216,23 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
 
 - (BOOL)xmppStream:(XMPPStream *)sender didReceiveIQ:(XMPPIQ *)iq
 {
+    /*
+     <iq xmlns="jabber:client" lang="en" to="mlalonde@dollarama-ejabberd-test.binnj.com/1435327366947397074538147" from="mlalonde@dollarama-ejabberd-test.binnj.com" type="result" id="D72B705B-F4DC-40DA-AA2A-72BF08960F7A">
+         <fin xmlns="urn:xmpp:mam:1" complete="true" queryid="68008622-B324-4CAE-96D3-13D29A86780E">
+             <set xmlns="http://jabber.org/protocol/rsm">
+                 <count>0</count>
+             </set>
+         </fin>
+     </iq>
+     */
     NSString *type = [iq type];
-    
-    if ([type isEqualToString:@"result"] && [iq elementForName:@"fin" xmlns:XMLNS_XMPP_ARCHIVE])
+    NSXMLElement *fin = [iq elementForName:@"fin" xmlns:XMLNS_XMPP_ARCHIVE];
+    if ([type isEqualToString:@"result"] && fin)
     {
+        NSXMLElement *set = [fin elementForName:@"set" xmlns:XMLNS_XMPP_RSM];
+        NSInteger count = [[set elementForName:@"count"] stringValueAsInt];
         _syncState = XMPPMessageArchiveSyncStateNone;
-        [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
+        [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinishedWithCount:count];
         [self setSyncFromDate:_syncStartDate forUser:_userBareJid];
     }
     return NO;
@@ -284,8 +296,11 @@ typedef NS_ENUM(int, XMPPMessageArchiveSyncState) {
     }
     else if ([message elementsForName:@"fin"] && [[[[message elementsForName:@"fin"] firstObject] xmlns] isEqualToString:XMLNS_XMPP_ARCHIVE])
     {
+        NSXMLElement *fin = [message elementForName:@"fin" xmlns:XMLNS_XMPP_ARCHIVE];
+        NSXMLElement *set = [fin elementForName:@"set" xmlns:XMLNS_XMPP_RSM];
+        NSInteger count = [[set elementForName:@"count"] stringValueAsInt];
         _syncState = XMPPMessageArchiveSyncStateNone;
-        [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinished];
+        [multicastDelegate syncLocalMessageArchiveWithServerMessageArchiveDidFinishedWithCount:count];
         [self setSyncFromDate:_syncStartDate forUser:_userBareJid];
     }
     return NO;
