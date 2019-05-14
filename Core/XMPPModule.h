@@ -6,22 +6,22 @@
 /**
  * XMPPModule is the base class that all extensions/modules inherit.
  * They automatically get:
- *
+ * 
  * - A dispatch queue.
  * - A multicast delegate that automatically invokes added delegates.
- *
+ * 
  * The module also automatically registers/unregisters itself with the
  * xmpp stream during the activate/deactive methods.
- **/
+**/
 NS_ASSUME_NONNULL_BEGIN
 @interface XMPPModule : NSObject
 {
-    XMPPStream *xmppStream;
-    
-    dispatch_queue_t moduleQueue;
-    void *moduleQueueTag;
-    
-    id multicastDelegate;
+	XMPPStream *xmppStream;
+
+	dispatch_queue_t moduleQueue;
+	void *moduleQueueTag;
+	
+	id multicastDelegate;
 }
 
 @property (readonly) dispatch_queue_t moduleQueue;
@@ -74,4 +74,3 @@ NS_ASSUME_NONNULL_BEGIN
 - (void) performBlockAsync:(dispatch_block_t)block NS_REFINED_FOR_SWIFT;
 @end
 NS_ASSUME_NONNULL_END
-

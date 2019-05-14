@@ -12,45 +12,45 @@
 
 /**
  * Standard init method.
- **/
+**/
 - (id)init
 {
-    return [self initWithDispatchQueue:NULL];
+	return [self initWithDispatchQueue:NULL];
 }
 
 /**
  * Designated initializer.
- **/
+**/
 - (id)initWithDispatchQueue:(dispatch_queue_t)queue
 {
-    if ((self = [super init]))
-    {
-        if (queue)
-        {
-            moduleQueue = queue;
-#if !OS_OBJECT_USE_OBJC
-            dispatch_retain(moduleQueue);
-#endif
-        }
-        else
-        {
-            const char *moduleQueueName = [[self moduleName] UTF8String];
-            moduleQueue = dispatch_queue_create(moduleQueueName, NULL);
-        }
-        
-        moduleQueueTag = &moduleQueueTag;
-        dispatch_queue_set_specific(moduleQueue, moduleQueueTag, moduleQueueTag, NULL);
-        
-        multicastDelegate = [[GCDMulticastDelegate alloc] init];
-    }
-    return self;
+	if ((self = [super init]))
+	{
+		if (queue)
+		{
+			moduleQueue = queue;
+			#if !OS_OBJECT_USE_OBJC
+			dispatch_retain(moduleQueue);
+			#endif
+		}
+		else
+		{
+			const char *moduleQueueName = [[self moduleName] UTF8String];
+			moduleQueue = dispatch_queue_create(moduleQueueName, NULL);
+		}
+		
+		moduleQueueTag = &moduleQueueTag;
+		dispatch_queue_set_specific(moduleQueue, moduleQueueTag, moduleQueueTag, NULL);
+		
+		multicastDelegate = [[GCDMulticastDelegate alloc] init];
+	}
+	return self;
 }
 
 - (void)dealloc
 {
-#if !OS_OBJECT_USE_OBJC
-    dispatch_release(moduleQueue);
-#endif
+	#if !OS_OBJECT_USE_OBJC
+	dispatch_release(moduleQueue);
+	#endif
 }
 
 /**
@@ -58,46 +58,46 @@
  *
  * It is recommended that subclasses override didActivate, instead of this method,
  * to perform any custom actions upon activation.
- **/
+**/
 - (BOOL)activate:(XMPPStream *)aXmppStream
 {
-    __block BOOL result = YES;
-    
-    dispatch_block_t block = ^{
-        
-        if (self->xmppStream != nil)
-        {
-            result = NO;
-        }
-        else
-        {
-            self->xmppStream = aXmppStream;
-            
-            [self->xmppStream addDelegate:self delegateQueue:self->moduleQueue];
-            [self->xmppStream registerModule:self];
-            
-            [self didActivate];
-        }
-    };
-    
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_sync(moduleQueue, block);
-    
-    return result;
+	__block BOOL result = YES;
+	
+	dispatch_block_t block = ^{
+		
+		if (self->xmppStream != nil)
+		{
+			result = NO;
+		}
+		else
+		{
+			self->xmppStream = aXmppStream;
+			
+			[self->xmppStream addDelegate:self delegateQueue:self->moduleQueue];
+			[self->xmppStream registerModule:self];
+			
+			[self didActivate];
+		}
+	};
+	
+	if (dispatch_get_specific(moduleQueueTag))
+		block();
+	else
+		dispatch_sync(moduleQueue, block);
+	
+	return result;
 }
 
 /**
  * It is recommended that subclasses override this method (instead of activate:)
  * to perform tasks after the module has been activated.
- *
+ * 
  * This method is only invoked if the module is successfully activated.
  * This method is always invoked on the moduleQueue.
- **/
+**/
 - (void)didActivate
 {
-    // Override me to do custom work after the module is activated
+	// Override me to do custom work after the module is activated
 }
 
 /**
@@ -110,26 +110,26 @@
  *
  * It is recommended that subclasses override didDeactivate, instead of this method,
  * to perform any custom actions upon deactivation.
- **/
+**/
 - (void)deactivate
 {
-    dispatch_block_t block = ^{
-        
-        if (self->xmppStream)
-        {
-            [self willDeactivate];
-            
-            [self->xmppStream removeDelegate:self delegateQueue:self->moduleQueue];
-            [self->xmppStream unregisterModule:self];
-            
-            self->xmppStream = nil;
-        }
-    };
-    
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_sync(moduleQueue, block);
+	dispatch_block_t block = ^{
+		
+		if (self->xmppStream)
+		{
+			[self willDeactivate];
+			
+			[self->xmppStream removeDelegate:self delegateQueue:self->moduleQueue];
+			[self->xmppStream unregisterModule:self];
+			
+			self->xmppStream = nil;
+		}
+	};
+	
+	if (dispatch_get_specific(moduleQueueTag))
+		block();
+	else
+		dispatch_sync(moduleQueue, block);
 }
 
 /**
@@ -138,88 +138,88 @@
  *
  * This method is only invoked if the module is transitioning from activated to deactivated.
  * This method is always invoked on the moduleQueue.
- **/
+**/
 - (void)willDeactivate
 {
-    // Override me to do custom work after the module is deactivated
+	// Override me to do custom work after the module is deactivated
 }
 
 - (dispatch_queue_t)moduleQueue
 {
-    return moduleQueue;
+	return moduleQueue;
 }
 
 - (void *)moduleQueueTag
 {
-    return moduleQueueTag;
+	return moduleQueueTag;
 }
 
 - (XMPPStream *)xmppStream
 {
-    if (dispatch_get_specific(moduleQueueTag))
-    {
-        return xmppStream;
-    }
-    else
-    {
-        __block XMPPStream *result;
-        
-        dispatch_sync(moduleQueue, ^{
-            result = self->xmppStream;
-        });
-        
-        return result;
-    }
+	if (dispatch_get_specific(moduleQueueTag))
+	{
+		return xmppStream;
+	}
+	else
+	{
+		__block XMPPStream *result;
+		
+		dispatch_sync(moduleQueue, ^{
+			result = self->xmppStream;
+		});
+		
+		return result;
+	}
 }
 
 - (void)addDelegate:(id)delegate delegateQueue:(dispatch_queue_t)delegateQueue
 {
-    // Asynchronous operation (if outside xmppQueue)
-    
-    dispatch_block_t block = ^{
-        [self->multicastDelegate addDelegate:delegate delegateQueue:delegateQueue];
-    };
-    
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_async(moduleQueue, block);
+	// Asynchronous operation (if outside xmppQueue)
+	
+	dispatch_block_t block = ^{
+		[self->multicastDelegate addDelegate:delegate delegateQueue:delegateQueue];
+	};
+	
+	if (dispatch_get_specific(moduleQueueTag))
+		block();
+	else
+		dispatch_async(moduleQueue, block);
 }
 
 - (void)removeDelegate:(id)delegate delegateQueue:(dispatch_queue_t)delegateQueue synchronously:(BOOL)synchronously
 {
-    dispatch_block_t block = ^{
-        [self->multicastDelegate removeDelegate:delegate delegateQueue:delegateQueue];
-    };
-    
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else if (synchronously)
-        dispatch_sync(moduleQueue, block);
-    else
-        dispatch_async(moduleQueue, block);
-    
+	dispatch_block_t block = ^{
+		[self->multicastDelegate removeDelegate:delegate delegateQueue:delegateQueue];
+	};
+	
+	if (dispatch_get_specific(moduleQueueTag))
+		block();
+	else if (synchronously)
+		dispatch_sync(moduleQueue, block);
+	else
+		dispatch_async(moduleQueue, block);
+	
 }
 - (void)removeDelegate:(id)delegate delegateQueue:(dispatch_queue_t)delegateQueue
 {
-    // Synchronous operation (common-case default)
-    
-    [self removeDelegate:delegate delegateQueue:delegateQueue synchronously:YES];
+	// Synchronous operation (common-case default)
+	
+	[self removeDelegate:delegate delegateQueue:delegateQueue synchronously:YES];
 }
 
 - (void)removeDelegate:(id)delegate
 {
-    // Synchronous operation (common-case default)
-    
-    [self removeDelegate:delegate delegateQueue:NULL synchronously:YES];
+	// Synchronous operation (common-case default)
+	
+	[self removeDelegate:delegate delegateQueue:NULL synchronously:YES];
 }
 
 - (NSString *)moduleName
 {
-    // Override me (if needed) to provide a customized module name.
-    // This name is used as the name of the dispatch_queue which could aid in debugging.
-    
-    return NSStringFromClass([self class]);
+	// Override me (if needed) to provide a customized module name.
+	// This name is used as the name of the dispatch_queue which could aid in debugging.
+	
+	return NSStringFromClass([self class]);
 }
 
 @end
