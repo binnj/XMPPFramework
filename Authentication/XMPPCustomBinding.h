@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
-#import "KissXML.h"
+
+@import KissXML;
 
 
 typedef NS_ENUM(NSInteger, XMPPBindResult) {
