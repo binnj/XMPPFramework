@@ -28,7 +28,7 @@
  * Step 1:
  * Import the header in your implementation or prefix file:
  *
- * #import <CocoaLumberjack/CocoaLumberjack.h>
+ * #import "CocoaLumberjack.h"
  *
  * Step 2:
  * Define your logging level in your implementation file:
@@ -71,33 +71,33 @@ FOUNDATION_EXPORT const unsigned char CocoaLumberjackVersionString[];
 #endif
 
 // Core
-#import <CocoaLumberjack/DDLog.h>
+#import "DDLog.h"
 
 // Main macros
-#import <CocoaLumberjack/DDLogMacros.h>
-#import <CocoaLumberjack/DDAssertMacros.h>
+#import "DDLogMacros.h"
+#import "DDAssertMacros.h"
 
 // Capture ASL
-#import <CocoaLumberjack/DDASLLogCapture.h>
+#import "DDASLLogCapture.h"
 
 // Loggers
-#import <CocoaLumberjack/DDLoggerNames.h>
+#import "DDLoggerNames.h"
 
-#import <CocoaLumberjack/DDTTYLogger.h>
-#import <CocoaLumberjack/DDASLLogger.h>
-#import <CocoaLumberjack/DDFileLogger.h>
-#import <CocoaLumberjack/DDOSLogger.h>
+#import "DDTTYLogger.h"
+#import "DDASLLogger.h"
+#import "DDFileLogger.h"
+#import "DDOSLogger.h"
 
 // Extensions
-#import <CocoaLumberjack/DDContextFilterLogFormatter.h>
-#import <CocoaLumberjack/DDDispatchQueueLogFormatter.h>
-#import <CocoaLumberjack/DDMultiFormatter.h>
-#import <CocoaLumberjack/DDFileLogger+Buffering.h>
+#import "DDContextFilterLogFormatter.h"
+#import "DDDispatchQueueLogFormatter.h"
+#import "DDMultiFormatter.h"
+#import "DDFileLogger+Buffering.h"
 
 // CLI
-#import <CocoaLumberjack/CLIColor.h>
+#import "CLIColor.h"
 
 // etc
-#import <CocoaLumberjack/DDAbstractDatabaseLogger.h>
-#import <CocoaLumberjack/DDLog+LOGV.h>
-#import <CocoaLumberjack/DDLegacyMacros.h>
+#import "DDAbstractDatabaseLogger.h"
+#import "DDLog+LOGV.h"
+#import "DDLegacyMacros.h"
