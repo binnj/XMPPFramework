@@ -3,7 +3,7 @@
 #import "XMPPCustomBinding.h"
 #import "GCDAsyncSocket.h"
 #import "GCDMulticastDelegate.h"
-@import KissXML;
+#import "KissXML.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
