@@ -126,7 +126,7 @@
  *
  * @param serviceName The name of the service for which rooms were discovered.
  */
-- (void)xmppMUC:(XMPPMUC *)sender didDiscoverMUCSUBServiceForRoom:(NSString *)roomBareJID;
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverMUCSUBServiceForRoom:(NSString *)roomBareJID;
 
 /**
  * Implement this method when calling [mucsubInstanse discoverMUCSUBForRoom:]. It will be invoked if
@@ -136,6 +136,6 @@
  * @param serviceName The name of the service for which rooms were attempted to be discovered.
  * @param error NSError containing more details of the failure.
  */
-- (void)xmppMUC:(XMPPMUC *)sender failedToDiscoverMUCSUBServiceForRoom:(NSString *)roomBareJID withError:(NSError *)error;
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToDiscoverMUCSUBServiceForRoom:(NSString *)roomBareJID withError:(NSError *)error;
 
 @end
