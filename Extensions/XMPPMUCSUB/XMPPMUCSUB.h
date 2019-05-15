@@ -5,9 +5,137 @@
 //  Created by Besat Zardosht on 2019-05-15.
 //  Copyright © 2019 binnj. All rights reserved.
 //
+#import <Foundation/Foundation.h>
+#import "XMPP.h"
+#import "XMPPRoom.h"
 
-#ifndef XMPPMUCSUB_h
-#define XMPPMUCSUB_h
+#define _XMPP_MUCSUB_H
 
+@class XMPPIDTracker;
 
-#endif /* XMPPMUCSUB_h */
+/**
+ * The XMPPMUCSUB module, combined with XMPPRoom, PubSub and associated storage classes,
+ * provides an implementation of muc-sub Chat.
+ * https://docs.ejabberd.im/developer/xmpp-clients-bots/extensions/muc-sub/
+ *
+ * The bulk of the code resides in XMPPRoom, which handles the xmpp technical details
+ * such as surrounding joining/leaving a room, sending/receiving messages, etc.
+ *
+ * The XMPPMUCSUB class provides general (but important) tasks relating to MUCSUB:
+ *  - It integrates with XMPPCapabilities (if available) to properly advertise support for MUCSUB.
+ *  - It monitors active XMPPRoom instances on the xmppStream,
+ *    and provides an efficient query to see if a presence or message element is targeted at a room.
+ *  - It listens for MUCSUB room invitations sent from other users.
+ **/
+@interface XMPPMUCSUB : XMPPModule
+{
+    /*    Inherited from XMPPModule:
+     
+     XMPPStream *xmppStream;
+     
+     dispatch_queue_t moduleQueue;
+     */
+    
+    NSMutableSet *rooms;
+    
+    XMPPIDTracker *xmppIDTracker;
+}
+
+/* Inherited from XMPPModule:
+ 
+ - (id)init;
+ - (id)initWithDispatchQueue:(dispatch_queue_t)queue;
+ 
+ - (BOOL)activate:(XMPPStream *)xmppStream;
+ - (void)deactivate;
+ 
+ @property (readonly) XMPPStream *xmppStream;
+ 
+ - (NSString *)moduleName;
+ 
+ */
+
+- (BOOL)isMUCSUBRoomPresence:(XMPPPresence *)presence;
+- (BOOL)isMUCSUBRoomMessage:(XMPPMessage *)message;
+
+/**
+ * Discovering support on MUC service
+ * You can check if MUC/Sub feature is available on MUC service by sending Disco Info IQ
+ * This method will attempt to discover existing services for the domain found in xmppStream.myJID.
+ *
+ * @see xmppMUCSUB:didDiscoverServices:
+ * @see xmppMUCSUBFailedToDiscoverServices:withError:
+ */
+- (void)discoverServices;
+
+/**
+ * This method will attempt to discover support on a specific MUC
+ *
+ * @see xmppMUCSUB:didDiscoverMUCSUBForRoom:
+ * @see xmppMUCSUB:failedToDiscoverMUCSUBForRoom:withError:
+ *
+ * @param serviceName The name of the service for which to discover rooms. Normally in the form
+ *                    of "chat.shakespeare.lit".
+ *
+ * @return NO if a serviceName is not provided, otherwise YES
+ */
+- (BOOL)discoverMUCSUBForRoom:(NSString *)roomBareJID;
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark -
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@protocol XMPPMUCSUBDelegate
+@optional
+
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender roomJID:(XMPPJID *)roomJID didReceiveInvitation:(XMPPMessage *)message;
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender roomJID:(XMPPJID *)roomJID didReceiveInvitationDecline:(XMPPMessage *)message;
+
+/**
+ * Implement this method when calling [mucsubInstanse discoverServices]. It will be invoked if the request
+ * for discovering services is successfully executed and receives a successful response.
+ *
+ * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param services An array of NSXMLElements in the form shown below. You will need to extract the data you
+ *                 wish to use.
+ *
+ *                 <feature var="urn:xmpp:mucsub:0" />
+ */
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverServices:(NSArray *)services;
+
+/**
+ * Implement this method when calling [mucsubInstanse discoverServices]. It will be invoked if the request
+ * for discovering services is unsuccessfully executed or receives an unsuccessful response.
+ *
+ * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param error NSError containing more details of the failure.
+ */
+- (void)xmppMUCSUBFailedToDiscoverServices:(XMPPMUCSUB *)sender withError:(NSError *)error;
+
+/**
+ * Implement this method when calling [mucsubInstanse discoverMUCSUBForRoom:]. It will be invoked if
+ * the request for discovering mucsub service is successfully executed and receives a successful response.
+ *
+ * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param rooms An array of NSXMLElements in the form shown below. You will need to extract the data you
+ *              wish to use.
+ *
+ *              <feature var='urn:xmpp:mucsub:0' />
+ *
+ * @param serviceName The name of the service for which rooms were discovered.
+ */
+- (void)xmppMUC:(XMPPMUC *)sender didDiscoverMUCSUBServiceForRoom:(NSString *)roomBareJID;
+
+/**
+ * Implement this method when calling [mucsubInstanse discoverMUCSUBForRoom:]. It will be invoked if
+ * the request for discovering mucsub service is unsuccessfully executed or receives an unsuccessful response.
+ *
+ * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param serviceName The name of the service for which rooms were attempted to be discovered.
+ * @param error NSError containing more details of the failure.
+ */
+- (void)xmppMUC:(XMPPMUC *)sender failedToDiscoverMUCSUBServiceForRoom:(NSString *)roomBareJID withError:(NSError *)error;
+
+@end
