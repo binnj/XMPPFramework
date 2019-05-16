@@ -323,29 +323,54 @@ NSString *const XMPPMucSubMessageNamespace = @"urn:xmpp:mucsub:nodes:messages";
 - (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message
 {
     /*
-     *    Here is as an example message received by a subscriber when a message is posted to a MUC room when subscriber is subscribed to node urn:xmpp:mucsub:nodes:messages:
-     *    <message from="coven@muc.shakespeare.example" to="hag66@shakespeare.example/pda">
-     *        <event xmlns="http://jabber.org/protocol/pubsub#event">
-     *            <items node="urn:xmpp:mucsub:nodes:messages">
-     *                <item id="18277869892147515942">
-     *                    <message xmlns="jabber:client" from="coven@muc.shakespeare.example/secondwitch" to="hag66@shakespeare.example/pda" type="groupchat">
-     *                        <archived xmlns="urn:xmpp:mam:tmp" by="muc.shakespeare.example" id="1467896732929849" />
-     *                        <stanza-id xmlns="urn:xmpp:sid:0" by="muc.shakespeare.example" id="1467896732929849" />
-     *                        <body>Hello from the MUC room !</body>
-     *                    </message>
-     *                </item>
-     *           </items>
-     *        </event>
-     *    </message>
+     * Here is as an example message received by a subscriber when a message is posted to a MUC room when subscriber is subscribed to node urn:xmpp:mucsub:nodes:messages:
+     *
+     * <message from="coven@muc.shakespeare.example" to="hag66@shakespeare.example/pda">
+     *     <event xmlns="http://jabber.org/protocol/pubsub#event">
+     *         <items node="urn:xmpp:mucsub:nodes:messages">
+     *             <item id="18277869892147515942">
+     *                 <message xmlns="jabber:client" from="coven@muc.shakespeare.example/secondwitch" to="hag66@shakespeare.example/pda" type="groupchat">
+     *                     <archived xmlns="urn:xmpp:mam:tmp" by="muc.shakespeare.example" id="1467896732929849" />
+     *                     <stanza-id xmlns="urn:xmpp:sid:0" by="muc.shakespeare.example" id="1467896732929849" />
+     *                     <body>Hello from the MUC room !</body>
+     *                 </message>
+     *             </item>
+     *        </items>
+     *     </event>
+     * </message>
+     */
+    
+    /*
+     * Presence changes in the MUC room are received wrapped in the same way by subscribers which subscribed to node urn:xmpp:mucsub:nodes:presence:
+     *
+     * <message from="coven@muc.shakespeare.example" to="hag66@shakespeare.example/pda">
+     *     <event xmlns="http://jabber.org/protocol/pubsub#event">
+     *         <items node="urn:xmpp:mucsub:nodes:presences">
+     *             <item id="8170705750417052518">
+     *                 <presence xmlns="jabber:client" from="coven@muc.shakespeare.example/secondwitch" type="unavailable" to="hag66@shakespeare.example/pda">
+     *                     <x xmlns="http://jabber.org/protocol/muc#user">
+     *                         <item affiliation="none" role="none" />
+     *                     </x>
+     *                 </presence>
+     *             </item>
+     *         </items>
+     *     </event>
+     * </message>
      */
     
     NSXMLElement *event = [message elementForName:@"event" xmlns:XMPPPubSubEventNamespace];
     NSXMLElement *items = [event elementForName:@"items" xmlns:XMPPMucSubMessageNamespace];
     NSXMLElement *item = [items elementForName:@"item"];
-    XMPPMessage *mucSubMessage =[XMPPMessage messageFromElement:[item elementForName:@"message"]];
+    NSXMLElement *messageElement = [item elementForName:@"message"];
+    NSXMLElement *presenceElement = [item elementForName:@"presence"];
     
-    if (mucSubMessage) {
+    if (messageElement) {
+        XMPPMessage *mucSubMessage = [XMPPMessage messageFromElement:messageElement];
         [multicastDelegate xmppMUCSUB:self didReceiveMessage:mucSubMessage];
+    }
+    if (presenceElement) {
+        XMPPPresence *mucSubPresence = [XMPPPresence presenceFromElement:presenceElement];
+        [multicastDelegate xmppMUCSUB:self didReceivePresence:mucSubPresence];
     }
     
     
