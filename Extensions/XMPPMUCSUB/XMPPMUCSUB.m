@@ -21,6 +21,9 @@ NSString *const XMPPMucSubErrorDomain = @"XMPPMUCSUBErrorDomain";
 NSString *const XMPPMucSubNamespace = @"urn:xmpp:mucsub:0";
 NSString *const XMPPPubSubEventNamespace = @"http://jabber.org/protocol/pubsub#event";
 NSString *const XMPPMucSubMessageNamespace = @"urn:xmpp:mucsub:nodes:messages";
+NSString *const XMPPMucSubPresenceNamespace = @"urn:xmpp:mucsub:nodes:presence";
+NSString *const XMPPMucSubSubscribeNamespace = @"urn:xmpp:mucsub:nodes:subscribe";
+NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubscribe";
 
 @interface XMPPMUCSUB()
 {
@@ -358,38 +361,65 @@ NSString *const XMPPMucSubMessageNamespace = @"urn:xmpp:mucsub:nodes:messages";
      * </message>
      */
     
+    /*
+     * If subscriber is subscribed to node urn:xmpp:mucsub:nodes:subscribers, message will be sent for every mucsub subscription change. When a user becomes a subscriber:
+     *
+     * <message from="coven@muc.shakespeare.example" to="hag66@shakespeare.example/pda">
+     *     <event xmlns="http://jabber.org/protocol/pubsub#event">
+     *         <items node="urn:xmpp:mucsub:nodes:subscribers">
+     *             <item id="17895981155977588737">
+     *                 <subscribe xmlns="urn:xmpp:mucsub:0" jid="bob@server.com" nick="bob"/>
+     *             </item>
+     *         </items>
+     *     </event>
+     * </message>
+     */
+    
+    /*
+     * When a user lost its subscription:
+     *
+     * <message from="coven@muc.shakespeare.example" to="hag66@shakespeare.example/pda">
+     *     <event xmlns="http://jabber.org/protocol/pubsub#event">
+     *         <items node="urn:xmpp:mucsub:nodes:subscribers">
+     *             <item id="10776102417321261057">
+     *                 <unsubscribe xmlns="urn:xmpp:mucsub:0" jid="bob@server.com" nick="bob"/>
+     *             </item>
+     *         </items>
+     *     </event>
+     * </message>
+     */
+    
     NSXMLElement *event = [message elementForName:@"event" xmlns:XMPPPubSubEventNamespace];
-    NSXMLElement *items = [event elementForName:@"items" xmlns:XMPPMucSubMessageNamespace];
-    NSXMLElement *item = [items elementForName:@"item"];
-    NSXMLElement *messageElement = [item elementForName:@"message"];
-    NSXMLElement *presenceElement = [item elementForName:@"presence"];
+    NSXMLElement *messageItems = [event elementForName:@"items" xmlns:XMPPMucSubMessageNamespace];
+    NSXMLElement *presenceItems = [event elementForName:@"items" xmlns:XMPPMucSubPresenceNamespace];
+    NSXMLElement *subscribeItems = [event elementForName:@"items" xmlns:XMPPMucSubSubscribeNamespace];
+    NSXMLElement *unsubscribeItems = [event elementForName:@"items" xmlns:XMPPMucSubUnsubscribeNamespace];
     
-    if (messageElement) {
-        XMPPMessage *mucSubMessage = [XMPPMessage messageFromElement:messageElement];
-        [multicastDelegate xmppMUCSUB:self didReceiveMessage:mucSubMessage];
+    if (messageItems) {
+        NSXMLElement *item = [messageItems elementForName:@"item"];
+        NSXMLElement *messageElement = [item elementForName:@"message"];
+        if (messageElement) {
+            XMPPMessage *mucSubMessage = [XMPPMessage messageFromElement:messageElement];
+            [multicastDelegate xmppMUCSUB:self didReceiveMessage:mucSubMessage];
+        }
     }
-    if (presenceElement) {
-        XMPPPresence *mucSubPresence = [XMPPPresence presenceFromElement:presenceElement];
-        [multicastDelegate xmppMUCSUB:self didReceivePresence:mucSubPresence];
+    if (presenceItems) {
+        NSXMLElement *item = [presenceItems elementForName:@"item"];
+        NSXMLElement *presenceElement = [item elementForName:@"presence"];
+        if (presenceElement) {
+            XMPPPresence *mucSubPresence = [XMPPPresence presenceFromElement:presenceElement];
+            [multicastDelegate xmppMUCSUB:self didReceivePresence:mucSubPresence];
+        }
     }
-    
-    
-    
-    NSXMLElement * x = [message elementForName:@"x" xmlns:XMPPMUCUserNamespace];
-    NSXMLElement * invite  = [x elementForName:@"invite"];
-    NSXMLElement * decline = [x elementForName:@"decline"];
-    
-    NSXMLElement * directInvite = [message elementForName:@"x" xmlns:@"jabber:x:conference"];
-    
-    XMPPJID * roomJID = [message from];
-    
-    if (invite || directInvite)
-    {
-        [multicastDelegate xmppMUCSUB:self roomJID:roomJID didReceiveInvitation:message];
+    if (subscribeItems) {
+        NSXMLElement *item = [subscribeItems elementForName:@"item"];
+        NSXMLElement *subscribeElement = [item elementForName:@"subscribe"];
+        [multicastDelegate xmppMUCSUB:self didSubscribe:subscribeElement];
     }
-    else if (decline)
-    {
-        [multicastDelegate xmppMUCSUB:self roomJID:roomJID didReceiveInvitationDecline:message];
+    if (unsubscribeItems) {
+        NSXMLElement *item = [unsubscribeItems elementForName:@"item"];
+        NSXMLElement *unsubscribeElement = [item elementForName:@"unsubscribe"];
+        [multicastDelegate xmppMUCSUB:self didUnsubscribe:unsubscribeElement];
     }
 }
 
