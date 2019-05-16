@@ -63,23 +63,23 @@
  * You can check if MUC/Sub feature is available on MUC service by sending Disco Info IQ
  * This method will attempt to discover existing services for the domain found in xmppStream.myJID.
  *
- * @see xmppMUCSUB:didDiscoverServices:
- * @see xmppMUCSUBFailedToDiscoverServices:withError:
+ * @see xmppMUCSUB:didDiscoverFeatures:
+ * @see xmppMUCSUBFailedToDiscoverFeatures:withError:
  */
-- (void)discoverServices;
+- (void)discoverFeatures;
 
 /**
  * This method will attempt to discover support on a specific MUC
  *
- * @see xmppMUCSUB:didDiscoverMUCSUBForRoom:
- * @see xmppMUCSUB:failedToDiscoverMUCSUBForRoom:withError:
+ * @see xmppMUCSUB:didDiscoverFeaturesForRoom:
+ * @see xmppMUCSUB:failedToDiscoverFeaturesForRoom:withError:
  *
  * @param serviceName The name of the service for which to discover rooms. Normally in the form
  *                    of "chat.shakespeare.lit".
  *
  * @return NO if a serviceName is not provided, otherwise YES
  */
-- (BOOL)discoverMUCSUBForRoom:(NSString *)roomBareJID;
+- (BOOL)discoverFeaturesForRoomJID:(XMPPJID *)roomJID;
 
 @end
 
@@ -94,7 +94,7 @@
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender roomJID:(XMPPJID *)roomJID didReceiveInvitationDecline:(XMPPMessage *)message;
 
 /**
- * Implement this method when calling [mucsubInstanse discoverServices]. It will be invoked if the request
+ * Implement this method when calling [mucsubInstanse discoverFeatures]. It will be invoked if the request
  * for discovering services is successfully executed and receives a successful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -103,19 +103,19 @@
  *
  *                 <feature var="urn:xmpp:mucsub:0" />
  */
-- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverServices:(NSArray *)services;
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverFeatures:(NSArray *)features;
 
 /**
- * Implement this method when calling [mucsubInstanse discoverServices]. It will be invoked if the request
+ * Implement this method when calling [mucsubInstanse discoverFeatures]. It will be invoked if the request
  * for discovering services is unsuccessfully executed or receives an unsuccessful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
  * @param error NSError containing more details of the failure.
  */
-- (void)xmppMUCSUBFailedToDiscoverServices:(XMPPMUCSUB *)sender withError:(NSError *)error;
+- (void)xmppMUCSUBFailedToDiscoverFeatures:(XMPPMUCSUB *)sender withError:(NSError *)error;
 
 /**
- * Implement this method when calling [mucsubInstanse discoverMUCSUBForRoom:]. It will be invoked if
+ * Implement this method when calling [mucsubInstanse discoverMUCSUBForRoomJID:]. It will be invoked if
  * the request for discovering mucsub service is successfully executed and receives a successful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -126,16 +126,16 @@
  *
  * @param serviceName The name of the service for which rooms were discovered.
  */
-- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverMUCSUBServiceForRoom:(NSString *)roomBareJID;
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverFeatures:(NSArray *)features ForRoomJID:(XMPPJID *)roomJID;
 
 /**
- * Implement this method when calling [mucsubInstanse discoverMUCSUBForRoom:]. It will be invoked if
+ * Implement this method when calling [mucsubInstanse discoverMUCSUBForRoomJID:]. It will be invoked if
  * the request for discovering mucsub service is unsuccessfully executed or receives an unsuccessful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
  * @param serviceName The name of the service for which rooms were attempted to be discovered.
  * @param error NSError containing more details of the failure.
  */
-- (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToDiscoverMUCSUBServiceForRoom:(NSString *)roomBareJID withError:(NSError *)error;
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToDiscoverFeaturesForRoomJID:(XMPPJID *)roomJID withError:(NSError *)error;
 
 @end

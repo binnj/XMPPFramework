@@ -16,13 +16,14 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_VERBOSE;
 static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 #endif
 
-NSString *const XMPPDiscoverItemsNamespace = @"http://jabber.org/protocol/disco#items";
+NSString *const XMPPMUCSUBDiscoInfo = @"http://jabber.org/protocol/disco#info";
 NSString *const XMPPMUCSUBErrorDomain = @"XMPPMUCSUBErrorDomain";
+NSString *const XMPPMUCSUBNamespace = @"urn:xmpp:mucsub:0";
 
 @interface XMPPMUCSUB()
 {
-    BOOL hasRequestedServices;
-    BOOL hasRequestedRooms;
+    BOOL hasRequestedFeatures;
+    NSMutableDictionary *hasRequestedFeaturesForRoom;
 }
 
 @end
@@ -32,7 +33,8 @@ NSString *const XMPPMUCSUBErrorDomain = @"XMPPMUCSUBErrorDomain";
 - (id)initWithDispatchQueue:(dispatch_queue_t)queue
 {
     if ((self = [super initWithDispatchQueue:queue])) {
-        rooms = [[NSMutableSet alloc] init];
+        rooms = [NSMutableSet new];
+        hasRequestedFeaturesForRoom = [NSMutableDictionary new];
     }
     return self;
 }
@@ -130,28 +132,28 @@ NSString *const XMPPMUCSUBErrorDomain = @"XMPPMUCSUBErrorDomain";
  *   <query xmlns='http://jabber.org/protocol/disco#info'/>
  * </iq>
  */
-- (void)discoverServices
+- (void)discoverFeatures
 {
     // This is a public method, so it may be invoked on any thread/queue.
     
     dispatch_block_t block = ^{ @autoreleasepool {
-        if (self->hasRequestedServices) return; // We've already requested services
+        if (self->hasRequestedFeatures) return; // We've already requested services
         
-        NSString *toStr = self->xmppStream.myJID.domain;
+        NSString *mucService = [NSString stringWithFormat:@"conference.%@", self->xmppStream.myJID.domain];
         NSXMLElement *query = [NSXMLElement elementWithName:@"query"
-                                                      xmlns:XMPPDiscoverItemsNamespace];
+                                                      xmlns:XMPPMUCSUBDiscoInfo];
         XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
-                                     to:[XMPPJID jidWithString:toStr]
+                                     to:[XMPPJID jidWithString:mucService]
                               elementID:[self->xmppStream generateUUID]
                                   child:query];
         
         [self->xmppIDTracker addElement:iq
-                           target:self
-                         selector:@selector(handleDiscoverServicesQueryIQ:withInfo:)
-                          timeout:60];
+                                 target:self
+                               selector:@selector(handleDiscoverFeaturesQueryIQ:withInfo:)
+                                timeout:60];
         
         [self->xmppStream sendElement:iq];
-        self->hasRequestedServices = YES;
+        self->hasRequestedFeatures = YES;
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
@@ -161,7 +163,7 @@ NSString *const XMPPMUCSUBErrorDomain = @"XMPPMUCSUBErrorDomain";
 }
 
 /**
- * This method provides functionality of Discovering muc-sub service for Room
+ * This method provides functionality of Discovering muc-sub features for Room
  *
  * @link {https://docs.ejabberd.im/developer/xmpp-clients-bots/extensions/muc-sub/#discovering-support-on-a-specific-muc}
  *
@@ -174,30 +176,30 @@ NSString *const XMPPMUCSUBErrorDomain = @"XMPPMUCSUBErrorDomain";
  *   <query xmlns='http://jabber.org/protocol/disco#info'/>
  * </iq>
  */
-- (BOOL)discoverMUCSUBForRoom:(NSString *)roomBareJID
+- (BOOL)discoverFeaturesForRoomJID:(XMPPJID *)roomJID
 {
     // This is a public method, so it may be invoked on any thread/queue.
     
-    if (roomBareJID.length < 2)
+    if (roomJID.bare.length == 0)
         return NO;
     
     dispatch_block_t block = ^{ @autoreleasepool {
-        if (self->hasRequestedRooms) return; // We've already requested rooms
+        if (self->hasRequestedFeaturesForRoom[roomJID.bare]) return; // We've already requested rooms
         
         NSXMLElement *query = [NSXMLElement elementWithName:@"query"
-                                                      xmlns:XMPPDiscoverItemsNamespace];
+                                                      xmlns:XMPPMUCSUBDiscoInfo];
         XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
-                                     to:[XMPPJID jidWithString:roomBareJID]
+                                     to:roomJID
                               elementID:[self->xmppStream generateUUID]
                                   child:query];
         
         [self->xmppIDTracker addElement:iq
                                  target:self
-                               selector:@selector(handleDiscoverRoomsQueryIQ:withInfo:)
+                               selector:@selector(handleDiscoverFeaturesForRoomQueryIQ:withInfo:)
                                 timeout:60];
         
         [self->xmppStream sendElement:iq];
-        self->hasRequestedRooms = YES;
+        self->hasRequestedFeaturesForRoom[roomJID.bare] = @YES;
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
@@ -215,7 +217,7 @@ NSString *const XMPPMUCSUBErrorDomain = @"XMPPMUCSUBErrorDomain";
 /**
  * This method handles the response received (or not received) after calling discoverServices.
  */
-- (void)handleDiscoverServicesQueryIQ:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
+- (void)handleDiscoverFeaturesQueryIQ:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
     dispatch_block_t block = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
@@ -228,17 +230,17 @@ NSString *const XMPPMUCSUBErrorDomain = @"XMPPMUCSUBErrorDomain";
                                                                              withDefaultValue:0]
                                              userInfo:dict];
             
-            [self->multicastDelegate xmppMUCSUBFailedToDiscoverServices:self
-                                                     withError:error];
+            [self->multicastDelegate xmppMUCSUBFailedToDiscoverFeatures:self
+                                                              withError:error];
             return;
         }
         
         NSXMLElement *query = [iq elementForName:@"query"
-                                           xmlns:XMPPDiscoverItemsNamespace];
+                                           xmlns:XMPPMUCSUBDiscoInfo];
         
-        NSArray *items = [query elementsForName:@"item"];
-        [self->multicastDelegate xmppMUCSUB:self didDiscoverServices:items];
-        self->hasRequestedServices = NO; // Set this back to NO to allow for future requests
+        NSArray *features = [query elementsForName:@"feature"];
+        [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features];
+        self->hasRequestedFeatures = NO; // Set this back to NO to allow for future requests
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
@@ -250,11 +252,12 @@ NSString *const XMPPMUCSUBErrorDomain = @"XMPPMUCSUBErrorDomain";
 /**
  * This method handles the response received (or not received) after calling discoverMUCSUBForRoom:.
  */
-- (void)handleDiscoverMUCSUBForRoom:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
+- (void)handleDiscoverFeaturesForRoomQueryIQ:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
     dispatch_block_t block = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
         NSString *roomName = [iq attributeStringValueForName:@"from" withDefaultValue:@""];
+        XMPPJID *roomJID = [XMPPJID jidWithString:roomName];
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -263,19 +266,15 @@ NSString *const XMPPMUCSUBErrorDomain = @"XMPPMUCSUBErrorDomain";
                                                  code:[errorElem attributeIntegerValueForName:@"code"
                                                                              withDefaultValue:0]
                                              userInfo:dict];
-            [self->multicastDelegate xmppMUCSUB:self
-      failedToDiscoverMUCSUBServiceForRoom:roomName
-                                 withError:error];
+            [self->multicastDelegate xmppMUCSUB:self failedToDiscoverFeaturesForRoomJID:roomJID withError:error];
             return;
         }
         
-        NSXMLElement *query = [iq elementForName:@"query"
-                                           xmlns:XMPPDiscoverItemsNamespace];
+        NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMUCSUBDiscoInfo];
         
-        NSArray *items = [query elementsForName:@"item"];
-        [self->multicastDelegate xmppMUCSUB:self
-            didDiscoverMUCSUBServiceForRoom:roomName];
-        self->hasRequestedRooms = NO; // Set this back to NO to allow for future requests
+        NSArray *features = [query elementsForName:@"feature"];
+        [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features ForRoomJID:roomJID];
+        self->hasRequestedFeaturesForRoom[roomJID.bare] = @NO; // Set this back to NO to allow for future requests
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
@@ -407,7 +406,7 @@ NSString *const XMPPMUCSUBErrorDomain = @"XMPPMUCSUBErrorDomain";
 
 #ifdef _XMPP_CAPABILITIES_H
 /**
- * If an XMPPCapabilites instance is used we want to advertise our support for MUC.
+ * If an XMPPCapabilites instance is used we want to advertise our support for MUCSUB.
  **/
 - (void)xmppCapabilities:(XMPPCapabilities *)sender collectingMyCapabilities:(NSXMLElement *)query
 {
@@ -415,12 +414,12 @@ NSString *const XMPPMUCSUBErrorDomain = @"XMPPMUCSUBErrorDomain";
     
     // <query xmlns="http://jabber.org/protocol/disco#info">
     //   ...
-    //   <feature var='http://jabber.org/protocol/muc'/>
+    //   <feature var='urn:xmpp:mucsub:0'/>
     //   ...
     // </query>
     
     NSXMLElement *feature = [NSXMLElement elementWithName:@"feature"];
-    [feature addAttributeWithName:@"var" stringValue:@"http://jabber.org/protocol/muc"];
+    [feature addAttributeWithName:@"var" stringValue:XMPPMUCSUBNamespace];
     
     [query addChild:feature];
 }
