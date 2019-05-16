@@ -16,9 +16,11 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_VERBOSE;
 static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 #endif
 
-NSString *const XMPPMUCSUBDiscoInfo = @"http://jabber.org/protocol/disco#info";
-NSString *const XMPPMUCSUBErrorDomain = @"XMPPMUCSUBErrorDomain";
-NSString *const XMPPMUCSUBNamespace = @"urn:xmpp:mucsub:0";
+NSString *const XMPPMucSubDiscoInfo = @"http://jabber.org/protocol/disco#info";
+NSString *const XMPPMucSubErrorDomain = @"XMPPMUCSUBErrorDomain";
+NSString *const XMPPMucSubNamespace = @"urn:xmpp:mucsub:0";
+NSString *const XMPPPubSubEventNamespace = @"http://jabber.org/protocol/pubsub#event";
+NSString *const XMPPMucSubMessageNamespace = @"urn:xmpp:mucsub:nodes:messages";
 
 @interface XMPPMUCSUB()
 {
@@ -141,7 +143,7 @@ NSString *const XMPPMUCSUBNamespace = @"urn:xmpp:mucsub:0";
         
         NSString *mucService = [NSString stringWithFormat:@"conference.%@", self->xmppStream.myJID.domain];
         NSXMLElement *query = [NSXMLElement elementWithName:@"query"
-                                                      xmlns:XMPPMUCSUBDiscoInfo];
+                                                      xmlns:XMPPMucSubDiscoInfo];
         XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
                                      to:[XMPPJID jidWithString:mucService]
                               elementID:[self->xmppStream generateUUID]
@@ -187,7 +189,7 @@ NSString *const XMPPMUCSUBNamespace = @"urn:xmpp:mucsub:0";
         if (self->hasRequestedFeaturesForRoom[roomJID.bare]) return; // We've already requested rooms
         
         NSXMLElement *query = [NSXMLElement elementWithName:@"query"
-                                                      xmlns:XMPPMUCSUBDiscoInfo];
+                                                      xmlns:XMPPMucSubDiscoInfo];
         XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
                                      to:roomJID
                               elementID:[self->xmppStream generateUUID]
@@ -225,7 +227,7 @@ NSString *const XMPPMUCSUBNamespace = @"urn:xmpp:mucsub:0";
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
             NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
-            NSError *error = [NSError errorWithDomain:XMPPMUCSUBErrorDomain
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain
                                                  code:[errorElem attributeIntegerValueForName:@"code"
                                                                              withDefaultValue:0]
                                              userInfo:dict];
@@ -236,7 +238,7 @@ NSString *const XMPPMUCSUBNamespace = @"urn:xmpp:mucsub:0";
         }
         
         NSXMLElement *query = [iq elementForName:@"query"
-                                           xmlns:XMPPMUCSUBDiscoInfo];
+                                           xmlns:XMPPMucSubDiscoInfo];
         
         NSArray *features = [query elementsForName:@"feature"];
         [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features];
@@ -262,7 +264,7 @@ NSString *const XMPPMUCSUBNamespace = @"urn:xmpp:mucsub:0";
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
             NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
-            NSError *error = [NSError errorWithDomain:XMPPMUCSUBErrorDomain
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain
                                                  code:[errorElem attributeIntegerValueForName:@"code"
                                                                              withDefaultValue:0]
                                              userInfo:dict];
@@ -270,7 +272,7 @@ NSString *const XMPPMUCSUBNamespace = @"urn:xmpp:mucsub:0";
             return;
         }
         
-        NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMUCSUBDiscoInfo];
+        NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMucSubDiscoInfo];
         
         NSArray *features = [query elementsForName:@"feature"];
         [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features ForRoomJID:roomJID];
@@ -320,59 +322,33 @@ NSString *const XMPPMUCSUBNamespace = @"urn:xmpp:mucsub:0";
 
 - (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message
 {
-    // Examples from XEP-0045:
-    //
-    //
-    // Example 124. Room Sends Invitation to New Member:
-    //
-    // <message from='darkcave@chat.shakespeare.lit' to='hecate@shakespeare.lit'>
-    //   <x xmlns='http://jabber.org/protocol/muc#user'>
-    //     <invite from='bard@shakespeare.lit'/>
-    //     <password>cauldronburn</password>
-    //   </x>
-    // </message>
-    //
-    //
-    // Example 125. Service Returns Error on Attempt by Mere Member to Invite Others to a Members-Only Room
-    //
-    // <message from='darkcave@chat.shakespeare.lit' to='hag66@shakespeare.lit/pda' type='error'>
-    //   <x xmlns='http://jabber.org/protocol/muc#user'>
-    //     <invite to='hecate@shakespeare.lit'>
-    //       <reason>
-    //         Hey Hecate, this is the place for all good witches!
-    //       </reason>
-    //     </invite>
-    //   </x>
-    //   <error type='auth'>
-    //     <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-    //   </error>
-    // </message>
-    //
-    //
-    // Example 50. Room Informs Invitor that Invitation Was Declined
-    //
-    // <message from='darkcave@chat.shakespeare.lit' to='crone1@shakespeare.lit/desktop'>
-    //   <x xmlns='http://jabber.org/protocol/muc#user'>
-    //     <decline from='hecate@shakespeare.lit'>
-    //       <reason>
-    //         Sorry, I'm too busy right now.
-    //       </reason>
-    //     </decline>
-    //   </x>
-    // </message>
-    //
-    //
-    // Examples from XEP-0249:
-    //
-    //
-    // Example 1. A direct invitation
-    //
-    // <message from='crone1@shakespeare.lit/desktop' to='hecate@shakespeare.lit'>
-    //   <x xmlns='jabber:x:conference'
-    //      jid='darkcave@macbeth.shakespeare.lit'
-    //      password='cauldronburn'
-    //      reason='Hey Hecate, this is the place for all good witches!'/>
-    // </message>
+    /*
+     *    Here is as an example message received by a subscriber when a message is posted to a MUC room when subscriber is subscribed to node urn:xmpp:mucsub:nodes:messages:
+     *    <message from="coven@muc.shakespeare.example" to="hag66@shakespeare.example/pda">
+     *        <event xmlns="http://jabber.org/protocol/pubsub#event">
+     *            <items node="urn:xmpp:mucsub:nodes:messages">
+     *                <item id="18277869892147515942">
+     *                    <message xmlns="jabber:client" from="coven@muc.shakespeare.example/secondwitch" to="hag66@shakespeare.example/pda" type="groupchat">
+     *                        <archived xmlns="urn:xmpp:mam:tmp" by="muc.shakespeare.example" id="1467896732929849" />
+     *                        <stanza-id xmlns="urn:xmpp:sid:0" by="muc.shakespeare.example" id="1467896732929849" />
+     *                        <body>Hello from the MUC room !</body>
+     *                    </message>
+     *                </item>
+     *           </items>
+     *        </event>
+     *    </message>
+     */
+    
+    NSXMLElement *event = [message elementForName:@"event" xmlns:XMPPPubSubEventNamespace];
+    NSXMLElement *items = [event elementForName:@"items" xmlns:XMPPMucSubMessageNamespace];
+    NSXMLElement *item = [items elementForName:@"item"];
+    XMPPMessage *mucSubMessage =[XMPPMessage messageFromElement:[item elementForName:@"message"]];
+    
+    if (mucSubMessage) {
+        [multicastDelegate xmppMUCSUB:self didReceiveMessage:mucSubMessage];
+    }
+    
+    
     
     NSXMLElement * x = [message elementForName:@"x" xmlns:XMPPMUCUserNamespace];
     NSXMLElement * invite  = [x elementForName:@"invite"];
@@ -419,7 +395,7 @@ NSString *const XMPPMUCSUBNamespace = @"urn:xmpp:mucsub:0";
     // </query>
     
     NSXMLElement *feature = [NSXMLElement elementWithName:@"feature"];
-    [feature addAttributeWithName:@"var" stringValue:XMPPMUCSUBNamespace];
+    [feature addAttributeWithName:@"var" stringValue:XMPPMucSubNamespace];
     
     [query addChild:feature];
 }

@@ -92,6 +92,7 @@
 
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender roomJID:(XMPPJID *)roomJID didReceiveInvitation:(XMPPMessage *)message;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender roomJID:(XMPPJID *)roomJID didReceiveInvitationDecline:(XMPPMessage *)message;
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didReceiveMessage:(XMPPMessage *)message;
 
 /**
  * Implement this method when calling [mucsubInstanse discoverFeatures]. It will be invoked if the request
