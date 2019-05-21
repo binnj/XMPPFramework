@@ -384,6 +384,17 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 
 /**
  * This method handles the response received (or not received) after calling discoverServices.
+ *
+ * MUC service will show a feature of type 'urn:xmpp:mucsub:0' to the response if the feature is supported and enabled
+ *
+ * <iq from="muc.shakespeare.example" to="hag66@shakespeare.example/pda" type="result" id="ik3vs715">
+ *     <query xmlns="http://jabber.org/protocol/disco#info">
+ *         <identity category="conference" type="text" name="Chatrooms" />
+ *         ...
+ *         <feature var="urn:xmpp:mucsub:0" />
+ *         ...
+ *     </query>
+ * </iq>
  */
 - (void)handleDiscoverFeaturesQueryIQ:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
@@ -419,6 +430,18 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 
 /**
  * This method handles the response received (or not received) after calling discoverMUCSUBForRoom:.
+ *
+ * A conference MUST add 'urn:xmpp:mucsub:0' to the response if the feature is supported and enabled
+ *
+ * <iq from='coven@muc.shakespeare.example' to='hag66@shakespeare.example/pda' type='result' id='ik3vs715'>
+ *     <query xmlns='http://jabber.org/protocol/disco#info'>
+ *         <identity category='conference' name='A Dark Cave' type='text' />
+ *         <feature var='http://jabber.org/protocol/muc' />
+ *         ...
+ *         <feature var='urn:xmpp:mucsub:0' />
+ *         ...
+ *     </query>
+ * </iq>
  */
 - (void)handleDiscoverFeaturesForRoomQueryIQ:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
@@ -508,7 +531,11 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 {
     dispatch_block_t block = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
-        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
+        // TODO: Which one should it be? in example it's "to" attribute but I think it should be "from" attribute
+        // Could it be a typo in documentation?
+        
+//        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
+        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"to" withDefaultValue:@""]];
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -746,13 +773,15 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
  **/
 - (void)xmppCapabilities:(XMPPCapabilities *)sender collectingMyCapabilities:(NSXMLElement *)query
 {
-    // This method is invoked on our moduleQueue.
-    
-    // <query xmlns="http://jabber.org/protocol/disco#info">
-    //   ...
-    //   <feature var='urn:xmpp:mucsub:0'/>
-    //   ...
-    // </query>
+    /*
+     * This method is invoked on our moduleQueue.
+     *
+     * <query xmlns="http://jabber.org/protocol/disco#info">
+     *     ...
+     *     <feature var='urn:xmpp:mucsub:0'/>
+     *     ...
+     * </query>
+     */
     
     NSXMLElement *feature = [NSXMLElement elementWithName:@"feature"];
     [feature addAttributeWithName:@"var" stringValue:XMPPMucSubNamespace];
