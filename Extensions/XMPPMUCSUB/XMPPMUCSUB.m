@@ -524,18 +524,15 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
  * This method handles the response received (or not received) after calling unsubscibeFromRoomJID:.
  *
  * Example: A MUC Room responds to unsubscribe request
- * <iq from='hag66@shakespeare.example' to='coven@muc.shakespeare.example' type='result' id='E6E10350-76CF-40C6-B91B-1EA08C332FC7' />
+ * <iq  from='coven@muc.shakespeare.example' to='hag66@shakespeare.example' type='result' id='E6E10350-76CF-40C6-B91B-1EA08C332FC7' />
  *
  */
 - (void)handleUnsubscribeFromRoom:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
     dispatch_block_t block = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
-        // TODO: Which one should it be? in example it's "to" attribute but I think it should be "from" attribute
-        // Could it be a typo in documentation?
         
-//        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
-        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"to" withDefaultValue:@""]];
+        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
