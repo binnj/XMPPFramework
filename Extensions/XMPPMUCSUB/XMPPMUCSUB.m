@@ -283,7 +283,7 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 }
 
 /**
- * UAt any time a user can unsubscribe from MUC Room events.
+ * At any time a user can unsubscribe from MUC Room events.
  *
  * @link {https://docs.ejabberd.im/developer/xmpp-clients-bots/extensions/muc-sub/#unsubscribing-from-a-muc-room}
  *
@@ -310,7 +310,7 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
     dispatch_block_t block = ^{ @autoreleasepool {
         
         NSXMLElement *unsubscribe = [NSXMLElement elementWithName:@"unsubscribe" xmlns:XMPPMucSubNamespace];
-
+        
         if (userJID) {
             [unsubscribe addAttributeWithName:@"jid" stringValue:userJID.bare];
         }
@@ -322,6 +322,46 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
         [self->xmppIDTracker addElement:iq
                                  target:self
                                selector:@selector(handleUnsubscribeFromRoom:withInfo:)
+                                timeout:60];
+        
+        [self->xmppStream sendElement:iq];
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+    
+}
+
+/**
+ * A user can query the MUC service to get their list of subscriptions.
+ *
+ * @link {https://docs.ejabberd.im/developer/xmpp-clients-bots/extensions/muc-sub/#list-of-subscriptions}
+ *
+ * Example: User asks for subscriptions list
+ *
+ * <iq from='hag66@shakespeare.example' to='muc.shakespeare.example' type='get' id='E6E10350-76CF-40C6-B91B-1EA08C332FC7'>
+ *     <subscriptions xmlns='urn:xmpp:mucsub:0' />
+ * </iq>
+ */
+- (void)fetchSubscriptionList {
+    
+    // This is a public method, so it may be invoked on any thread/queue.
+    
+    dispatch_block_t block = ^{ @autoreleasepool {
+        
+        NSXMLElement *subscriptions = [NSXMLElement elementWithName:@"subscriptions" xmlns:XMPPMucSubNamespace];
+        XMPPJID *mucServiceJID = [XMPPJID jidWithString:[NSString stringWithFormat:@"conference.%@", self->xmppStream.myJID.domain]];
+        
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
+                                     to: mucServiceJID
+                              elementID:[self->xmppStream generateUUID]
+                                  child:subscriptions];
+        
+        [self->xmppIDTracker addElement:iq
+                                 target:self
+                               selector:@selector(handleFetchSubscriptionList:withInfo:)
                                 timeout:60];
         
         [self->xmppStream sendElement:iq];
@@ -380,8 +420,7 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 {
     dispatch_block_t block = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
-        NSString *roomName = [iq attributeStringValueForName:@"from" withDefaultValue:@""];
-        XMPPJID *roomJID = [XMPPJID jidWithString:roomName];
+        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -425,8 +464,7 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 {
     dispatch_block_t block = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
-        NSString *roomName = [iq attributeStringValueForName:@"from" withDefaultValue:@""];
-        XMPPJID *roomJID = [XMPPJID jidWithString:roomName];
+        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -466,8 +504,7 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 {
     dispatch_block_t block = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
-        NSString *roomName = [iq attributeStringValueForName:@"from" withDefaultValue:@""];
-        XMPPJID *roomJID = [XMPPJID jidWithString:roomName];
+        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -481,6 +518,52 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
         }
         
         [self->multicastDelegate xmppMUCSUB:self didUnsubscribeFromRoomJID:roomJID];
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+}
+
+/**
+ * This method handles the response received (or not received) after calling fetchSubscriptionList.
+ *
+ * Example: Server replies with subscriptions list
+ *
+ * <iq from='muc.shakespeare.example' to='hag66@shakespeare.example' type='result' id='E6E10350-76CF-40C6-B91B-1EA08C332FC7'>
+ *     <subscriptions xmlns='urn:xmpp:mucsub:0'>
+ *         <subscription jid='coven@muc.shakespeare.example'>
+ *             <event node='urn:xmpp:mucsub:nodes:messages'/>
+ *             <event node='urn:xmpp:mucsub:nodes:affiliations'/>
+ *             <event node='urn:xmpp:mucsub:nodes:subject'/>
+ *             <event node='urn:xmpp:mucsub:nodes:config'/>
+ *         </subscription>
+ *         <subscription jid='chat@muc.shakespeare.example'>
+ *             <event node='urn:xmpp:mucsub:nodes:messages'/>
+ *         </subscription>
+ *     </subscriptions>
+ * </iq>
+ *
+ */
+- (void)handleFetchSubscriptionList:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
+{
+    dispatch_block_t block = ^{ @autoreleasepool {
+        NSXMLElement *errorElem = [iq elementForName:@"error"];
+        NSXMLElement *subscriptions = [iq elementForName:@"subscriptions"];
+        
+        if (errorElem) {
+            NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
+            NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain
+                                                 code:[errorElem attributeIntegerValueForName:@"code"
+                                                                             withDefaultValue:0]
+                                             userInfo:dict];
+            [self->multicastDelegate xmppMUCSUB:self failedToFetchSubscriptionListWithError:error];
+            return;
+        }
+        
+        [self->multicastDelegate xmppMUCSUB:self didFetchSubscriptionList:subscriptions];
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
@@ -527,6 +610,11 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 - (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message
 {
     /*
+     * @link {https://docs.ejabberd.im/developer/xmpp-clients-bots/extensions/muc-sub/#receiving-events}
+     */
+    
+    /*
+     *
      * Here is as an example message received by a subscriber when a message is posted to a MUC room when subscriber is subscribed to node urn:xmpp:mucsub:nodes:messages:
      *
      * <message from="coven@muc.shakespeare.example" to="hag66@shakespeare.example/pda">

@@ -119,6 +119,12 @@ typedef NSString* XMPPSubscribeEvent;
  */
 - (void)unsubscibeFromRoomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID;
 
+/**
+ * A user can query the MUC service to get their list of subscriptions.
+ *
+ */
+- (void)fetchSubscriptionList;
+
 @end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,5 +224,23 @@ typedef NSString* XMPPSubscribeEvent;
  * @param error NSError containing more details of the failure.
  */
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToUnsubscribeFromRoomJID:(XMPPJID *)roomJID withError:(NSError *)error;
+
+/**
+ * Implement this method when calling [mucsubInstanse didFetchSubscriptionList:]. It will be invoked if
+ * the request for fetching subscription list is successfully executed and receives a successful response.
+ *
+ * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param subscriptions list of subscriptions.
+ */
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didFetchSubscriptionList:(NSXMLElement *)subscriptions;
+
+/**
+ * Implement this method when calling [mucsubInstanse failedToFetchSubscriptionListWithError:]. It will be invoked if
+ * the request for fetching subscription list is unsuccessfully executed or receives an unsuccessful response.
+ *
+ * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param error NSError containing more details of the failure.
+ */
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToFetchSubscriptionListWithError:(NSError *)error;
 
 @end
