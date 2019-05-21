@@ -45,8 +45,6 @@ typedef NSString* XMPPSubscribeEvent;
      dispatch_queue_t moduleQueue;
      */
     
-    NSMutableSet *rooms;
-    
     XMPPIDTracker *xmppIDTracker;
 }
 
@@ -63,9 +61,6 @@ typedef NSString* XMPPSubscribeEvent;
  - (NSString *)moduleName;
  
  */
-
-- (BOOL)isMUCSUBRoomPresence:(XMPPPresence *)presence;
-- (BOOL)isMUCSUBRoomMessage:(XMPPMessage *)message;
 
 /**
  * Discovering support on MUC service
@@ -141,8 +136,6 @@ typedef NSString* XMPPSubscribeEvent;
 @protocol XMPPMUCSUBDelegate
 @optional
 
-- (void)xmppMUCSUB:(XMPPMUCSUB *)sender roomJID:(XMPPJID *)roomJID didReceiveInvitation:(XMPPMessage *)message;
-- (void)xmppMUCSUB:(XMPPMUCSUB *)sender roomJID:(XMPPJID *)roomJID didReceiveInvitationDecline:(XMPPMessage *)message;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didReceiveMessage:(XMPPMessage *)message;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didReceivePresence:(XMPPPresence *)message;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didSubscribe:(NSXMLElement *)subscribe;

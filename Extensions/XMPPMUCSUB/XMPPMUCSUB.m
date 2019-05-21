@@ -38,7 +38,6 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 - (id)initWithDispatchQueue:(dispatch_queue_t)queue
 {
     if ((self = [super initWithDispatchQueue:queue])) {
-        rooms = [NSMutableSet new];
         hasRequestedFeaturesForRoom = [NSMutableDictionary new];
     }
     return self;
@@ -88,40 +87,6 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark Public API
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-- (BOOL)isMUCSUBRoomElement:(XMPPElement *)element
-{
-    XMPPJID *bareFrom = [[element from] bareJID];
-    if (bareFrom == nil)
-    {
-        return NO;
-    }
-    
-    __block BOOL result = NO;
-    
-    dispatch_block_t block = ^{ @autoreleasepool {
-        
-        result = [self->rooms containsObject:bareFrom];
-        
-    }};
-    
-    if (dispatch_get_specific(moduleQueueTag))
-        block();
-    else
-        dispatch_sync(moduleQueue, block);
-    
-    return result;
-}
-
-- (BOOL)isMUCSUBRoomPresence:(XMPPPresence *)presence
-{
-    return [self isMUCSUBRoomElement:presence];
-}
-
-- (BOOL)isMUCSUBRoomMessage:(XMPPMessage *)message
-{
-    return [self isMUCSUBRoomElement:message];
-}
 
 /**
  * This method provides functionality of Discovering a MUCSUB Service.
@@ -658,37 +623,6 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark XMPPStream Delegate
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-- (void)xmppStream:(XMPPStream *)sender didRegisterModule:(id)module
-{
-    if ([module isKindOfClass:[XMPPRoom class]])
-    {
-        XMPPJID *roomJID = [(XMPPRoom *)module roomJID];
-        
-        [rooms addObject:roomJID];
-    }
-}
-
-- (void)xmppStream:(XMPPStream *)sender willUnregisterModule:(id)module
-{
-    if ([module isKindOfClass:[XMPPRoom class]])
-    {
-        XMPPJID *roomJID = [(XMPPRoom *)module roomJID];
-        
-        // It's common for the room to get deactivated and deallocated before
-        // we've received the goodbye presence from the server.
-        // So we're going to postpone for a bit removing the roomJID from the list.
-        // This way the isMUCRoomElement will still remain accurate
-        // for presence elements that may arrive momentarily.
-        
-        double delayInSeconds = 30.0;
-        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-        dispatch_after(popTime, moduleQueue, ^{ @autoreleasepool {
-            
-            [self->rooms removeObject:roomJID];
-        }});
-    }
-}
 
 - (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message
 {
