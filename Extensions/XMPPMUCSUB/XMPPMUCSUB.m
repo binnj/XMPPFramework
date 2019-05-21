@@ -374,6 +374,45 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
     
 }
 
+/**
+ * A room moderator can get the list of subscribers by sending <subscriptions/> request directly to the room JID.
+ *
+ * @link {https://docs.ejabberd.im/developer/xmpp-clients-bots/extensions/muc-sub/#list-of-subscriptions}
+ *
+ * Example: Moderator asks for subscribers list
+ *
+ * <iq from='hag66@shakespeare.example' to='coven@muc.shakespeare.example' type='get' id='E6E10350-76CF-40C6-B91B-1EA08C332FC7'>
+ *    <subscriptions xmlns='urn:xmpp:mucsub:0' />
+ * </iq>
+ */
+- (void)fetchSubscribersListForRoom:(XMPPJID *)roomJID {
+    
+    // This is a public method, so it may be invoked on any thread/queue.
+    
+    dispatch_block_t block = ^{ @autoreleasepool {
+        
+        NSXMLElement *subscriptions = [NSXMLElement elementWithName:@"subscriptions" xmlns:XMPPMucSubNamespace];
+        
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
+                                     to: roomJID
+                              elementID:[self->xmppStream generateUUID]
+                                  child:subscriptions];
+        
+        [self->xmppIDTracker addElement:iq
+                                 target:self
+                               selector:@selector(handleFetchSubscribersList:withInfo:)
+                                timeout:60];
+        
+        [self->xmppStream sendElement:iq];
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+    
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark XMPPIDTracker
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -564,6 +603,50 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
         }
         
         [self->multicastDelegate xmppMUCSUB:self didFetchSubscriptionList:subscriptions];
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+}
+
+/**
+ * This method handles the response received (or not received) after calling fetchSubscribersListForRoom:.
+ *
+ * Example: Server replies with subscribers list
+ *
+ * <iq from='coven@muc.shakespeare.example' to='hag66@shakespeare.example' type='result' id='E6E10350-76CF-40C6-B91B-1EA08C332FC7'>
+ *     <subscriptions xmlns='urn:xmpp:mucsub:0'>
+ *         <subscription jid='juliet@shakespeare.example'>
+ *             <event node='urn:xmpp:mucsub:nodes:messages'/>
+ *             <event node='urn:xmpp:mucsub:nodes:affiliations'/>
+ *         </subscription>
+ *         <subscription jid='romeo@shakespeare.example'>
+ *             <event node='urn:xmpp:mucsub:nodes:messages'/>
+ *         </subscription>
+ *     </subscriptions>
+ * </iq>
+ */
+- (void)handleFetchSubscribersList:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
+{
+    dispatch_block_t block = ^{ @autoreleasepool {
+        NSXMLElement *errorElem = [iq elementForName:@"error"];
+        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
+        NSXMLElement *subscriptions = [iq elementForName:@"subscriptions"];
+        
+        if (errorElem) {
+            NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
+            NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain
+                                                 code:[errorElem attributeIntegerValueForName:@"code"
+                                                                             withDefaultValue:0]
+                                             userInfo:dict];
+            [self->multicastDelegate xmppMUCSUB:self failedToFetchSubscribersList:error];
+            return;
+        }
+        
+        [self->multicastDelegate xmppMUCSUB:self didFetchSubscribersList:subscriptions forRoomJID:roomJID];
     }};
     
     if (dispatch_get_specific(moduleQueueTag))

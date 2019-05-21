@@ -125,6 +125,13 @@ typedef NSString* XMPPSubscribeEvent;
  */
 - (void)fetchSubscriptionList;
 
+/**
+ * A room moderator can get the list of subscribers by sending <subscriptions/> request directly to the room JID.
+ *
+ * @param roomJID the room that user wants to get list of subscribers.
+ */
+- (void)fetchSubscribersListForRoom:(XMPPJID *)roomJID;
+
 @end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -242,5 +249,23 @@ typedef NSString* XMPPSubscribeEvent;
  * @param error NSError containing more details of the failure.
  */
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToFetchSubscriptionListWithError:(NSError *)error;
+
+/**
+ * Implement this method when calling [mucsubInstanse didFetchSubscribersList:forRoomJID:]. It will be invoked if
+ * the request for fetching subscribers list is successfully executed and receives a successful response.
+ *
+ * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param roomJID room JID that user wants to fetch subscribers list for.
+ */
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didFetchSubscribersList:(NSXMLElement *)subscriptions forRoomJID:(XMPPJID *)roomJID;
+
+/**
+ * Implement this method when calling [mucsubInstanse failedToFetchSubscriptionListWithError:]. It will be invoked if
+ * the request for fetching subscribers list is unsuccessfully executed or receives an unsuccessful response.
+ *
+ * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param error NSError containing more details of the failure.
+ */
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToFetchSubscribersList:(NSError *)error;
 
 @end
