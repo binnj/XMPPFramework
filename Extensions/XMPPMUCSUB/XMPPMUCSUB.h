@@ -13,6 +13,15 @@
 
 @class XMPPIDTracker;
 
+typedef NSString* XMPPSubscribeEvent;
+#define XMPPSubscribeEventPresence        @"urn:xmpp:mucsub:nodes:presence"
+#define XMPPSubscribeEventMessages        @"urn:xmpp:mucsub:nodes:messages"
+#define XMPPSubscribeEventAffiliations    @"urn:xmpp:mucsub:nodes:affiliations"
+#define XMPPSubscribeEventSubscribers     @"urn:xmpp:mucsub:nodes:subscribers"
+#define XMPPSubscribeEventConfig          @"urn:xmpp:mucsub:nodes:config"
+#define XMPPSubscribeEventSubject         @"urn:xmpp:mucsub:nodes:subject"
+#define XMPPSubscribeEventSystem          @"urn:xmpp:mucsub:nodes:system"
+
 /**
  * The XMPPMUCSUB module, combined with XMPPRoom, PubSub and associated storage classes,
  * provides an implementation of muc-sub Chat.
@@ -74,12 +83,27 @@
  * @see xmppMUCSUB:didDiscoverFeaturesForRoom:
  * @see xmppMUCSUB:failedToDiscoverFeaturesForRoom:withError:
  *
- * @param serviceName The name of the service for which to discover rooms. Normally in the form
- *                    of "chat.shakespeare.lit".
- *
- * @return NO if a serviceName is not provided, otherwise YES
  */
 - (BOOL)discoverFeaturesForRoomJID:(XMPPJID *)roomJID;
+
+/**
+ * User can subscribe to  MUC Room events
+ *
+ * Subscription is associated with a nick.It will implicitly register the nick.
+ * Server should otherwise make sure that subscription match the user registered nickname in that room.
+ * In order to change the nick and/or subscription nodes, the same request MUST be sent with a different nick or nodes information.
+ *
+ * A room moderator can subscribe another user to MUC Room events by providing the user JID as an attribute in the <subscribe/> element.
+ *
+ * @see xmppMUCSUB:didSubscribeForRoomJID:
+ * @see xmppMUCSUB:failedToSubscribeForRoomJID:withError:
+ *
+ * @param events the events that user wants to subscribe to.
+ * @param roomJID the room that user wants to subscribe to.
+ * @param nickName nickname of user in room.
+ * @param password room password if there is any.
+ */
+- (void)subscibeToEvents:(NSArray<XMPPSubscribeEvent> *)events roomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID withNick:(NSString *)nickName passwordForRoom:(NSString *)password;
 
 @end
 
@@ -102,7 +126,7 @@
  * for discovering services is successfully executed and receives a successful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
- * @param services An array of NSXMLElements in the form shown below. You will need to extract the data you
+ * @param features An array of NSXMLElements in the form shown below. You will need to extract the data you
  *                 wish to use.
  *
  *                 <feature var="urn:xmpp:mucsub:0" />
@@ -123,12 +147,12 @@
  * the request for discovering mucsub service is successfully executed and receives a successful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
- * @param rooms An array of NSXMLElements in the form shown below. You will need to extract the data you
+ * @param features An array of NSXMLElements in the form shown below. You will need to extract the data you
  *              wish to use.
  *
  *              <feature var='urn:xmpp:mucsub:0' />
  *
- * @param serviceName The name of the service for which rooms were discovered.
+ * @param roomJID room JID that user wants to discover mucsub service for.
  */
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverFeatures:(NSArray *)features ForRoomJID:(XMPPJID *)roomJID;
 
@@ -137,9 +161,28 @@
  * the request for discovering mucsub service is unsuccessfully executed or receives an unsuccessful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
- * @param serviceName The name of the service for which rooms were attempted to be discovered.
+ * @param roomJID room JID that user wants to discover mucsub service for.
  * @param error NSError containing more details of the failure.
  */
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToDiscoverFeaturesForRoomJID:(XMPPJID *)roomJID withError:(NSError *)error;
+
+/**
+ * Implement this method when calling [mucsubInstanse didSubscribeForRoomJID:]. It will be invoked if
+ * the request for subscribing roomJID is successfully executed and receives a successful response.
+ *
+ * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param roomJID room JID that user wants to subscribe to.
+ */
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didSubscribeToEvents:(NSArray<XMPPSubscribeEvent> *)events roomJID:(XMPPJID *)roomJID;
+
+/**
+ * Implement this method when calling [mucsubInstanse failedToSubscribeForRoomJID:withError:]. It will be invoked if
+ * the request for subscribing roomJID is unsuccessfully executed or receives an unsuccessful response.
+ *
+ * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param roomJID room JID that user wants to subscribe to.
+ * @param error NSError containing more details of the failure.
+ */
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToSubscribeToRoomJID:(XMPPJID *)roomJID withError:(NSError *)error;
 
 @end

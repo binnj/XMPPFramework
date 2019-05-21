@@ -172,7 +172,7 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
  *
  * @link {https://docs.ejabberd.im/developer/xmpp-clients-bots/extensions/muc-sub/#discovering-support-on-a-specific-muc}
  *
- * Example 5. Entity Queries muc-sub Service for Rooms
+ * Example: Entity Queries muc-sub Service for Rooms
  *
  * <iq from='hag66@shakespeare.example/pda'
  *       to='coven@muc.shakespeare.example'
@@ -213,6 +213,73 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
         dispatch_async(moduleQueue, block);
     
     return YES;
+}
+
+/**
+ * User can subscribe to the following events, by subscribing to specific nodes:
+ * urn:xmpp:mucsub:nodes:presence
+ * urn:xmpp:mucsub:nodes:messages
+ * urn:xmpp:mucsub:nodes:affiliations
+ * urn:xmpp:mucsub:nodes:subscribers
+ * urn:xmpp:mucsub:nodes:config
+ * urn:xmpp:mucsub:nodes:subject
+ * urn:xmpp:mucsub:nodes:system
+ *
+ * @link {https://docs.ejabberd.im/developer/xmpp-clients-bots/extensions/muc-sub/#subscribing-to-muc-sub-events}
+ *
+ * Example: User Subscribes to MUC/Sub events
+ *
+ * <iq from="hag66@shakespeare.example" to="coven@muc.shakespeare.example" type="set" id="E6E10350-76CF-40C6-B91B-1EA08C332FC7">
+ *     <subscribe xmlns="urn:xmpp:mucsub:0" nick="mynick" password="roompassword">
+ *         <event node="urn:xmpp:mucsub:nodes:messages" />
+ *         <event node="urn:xmpp:mucsub:nodes:affiliations" />
+ *         <event node="urn:xmpp:mucsub:nodes:subject" />
+ *         <event node="urn:xmpp:mucsub:nodes:config" />
+ *     </subscribe>
+ * </iq>
+ */
+- (void)subscibeToEvents:(NSArray<XMPPSubscribeEvent> *)events roomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID withNick:(NSString *)nickName passwordForRoom:(NSString *)password {
+    
+    // This is a public method, so it may be invoked on any thread/queue.
+    
+    if (roomJID.bare.length == 0)
+        return;
+    
+    dispatch_block_t block = ^{ @autoreleasepool {
+       
+        NSXMLElement *subscribe = [NSXMLElement elementWithName:@"subscribe" xmlns:XMPPMucSubNamespace];
+        if (nickName.length > 0) {
+            [subscribe addAttributeWithName:@"nick" stringValue:nickName];
+        }
+        if (password.length > 0) {
+            [subscribe addAttributeWithName:@"password" stringValue:password];
+        }
+        if (userJID) {
+            [subscribe addAttributeWithName:@"jid" stringValue:userJID.bare];
+        }
+        for (XMPPSubscribeEvent xmppSubscribeEvent in events) {
+            NSXMLElement *event = [NSXMLElement elementWithName:@"event"];
+            [event addAttributeWithName:@"node" stringValue:xmppSubscribeEvent];
+            [subscribe addChild:event];
+        }
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"set"
+                                     to:roomJID
+                              elementID:[self->xmppStream generateUUID]
+                                  child:subscribe];
+        
+        [self->xmppIDTracker addElement:iq
+                                 target:self
+                               selector:@selector(handleSubscribeToRoom:withInfo:)
+                                timeout:60];
+        
+        [self->xmppStream sendElement:iq];
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+    
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,6 +347,54 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
         NSArray *features = [query elementsForName:@"feature"];
         [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features ForRoomJID:roomJID];
         self->hasRequestedFeaturesForRoom[roomJID.bare] = @NO; // Set this back to NO to allow for future requests
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+}
+
+/**
+ * This method handles the response received (or not received) after calling subscibeToEvents:forRoomJID:withNick.
+ *
+ * Example: Server replies with success
+ * <iq from='coven@muc.shakespeare.example' to='hag66@shakespeare.example' type='result' id='E6E10350-76CF-40C6-B91B-1EA08C332FC7'>
+ *     <subscribe xmlns='urn:xmpp:mucsub:0'>
+ *         <event node='urn:xmpp:mucsub:nodes:messages' />
+ *         <event node='urn:xmpp:mucsub:nodes:affiliations' />
+ *         <event node='urn:xmpp:mucsub:nodes:subject' />
+ *         <event node='urn:xmpp:mucsub:nodes:config' />
+ *     </subscribe>
+ * </iq>
+ *
+ */
+- (void)handleSubscribeToRoom:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
+{
+    dispatch_block_t block = ^{ @autoreleasepool {
+        NSXMLElement *errorElem = [iq elementForName:@"error"];
+        NSString *roomName = [iq attributeStringValueForName:@"from" withDefaultValue:@""];
+        XMPPJID *roomJID = [XMPPJID jidWithString:roomName];
+        
+        if (errorElem) {
+            NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
+            NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain
+                                                 code:[errorElem attributeIntegerValueForName:@"code"
+                                                                             withDefaultValue:0]
+                                             userInfo:dict];
+            [self->multicastDelegate xmppMUCSUB:self failedToSubscribeToRoomJID:roomJID withError:error];
+            return;
+        }
+        
+        NSXMLElement *subscribe = [iq elementForName:@"subscribe" xmlns:XMPPMucSubNamespace];
+        
+        NSArray *events = [subscribe elementsForName:@"event"];
+        NSMutableArray<XMPPSubscribeEvent> *subscribedEvents = [NSMutableArray new];
+        for (NSXMLElement *event in events) {
+            [subscribedEvents addObject:[[event attributeForName:@"node"] stringValue]];
+        }
+        [self->multicastDelegate xmppMUCSUB:self didSubscribeToEvents:subscribedEvents roomJID:roomJID];
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
@@ -433,7 +548,6 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
     
     return NO;
 }
-
 
 #ifdef _XMPP_CAPABILITIES_H
 /**
