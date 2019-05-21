@@ -100,10 +100,24 @@ typedef NSString* XMPPSubscribeEvent;
  *
  * @param events the events that user wants to subscribe to.
  * @param roomJID the room that user wants to subscribe to.
+ * @param userJID Room moderator subscribes another room user.
  * @param nickName nickname of user in room.
  * @param password room password if there is any.
  */
 - (void)subscibeToEvents:(NSArray<XMPPSubscribeEvent> *)events roomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID withNick:(NSString *)nickName passwordForRoom:(NSString *)password;
+
+/**
+ * User can unsubscribe from MUC Room events
+ *
+ * A room moderator can unsubscribe another room user from MUC Room events by providing the user JID as an attribute in the <unsubscribe/> element.
+ *
+ * @see xmppMUCSUB:didUnsubscribeFromRoomJID:
+ * @see xmppMUCSUB:failedToUnsubscribeFromRoomJID:withError:
+ *
+ * @param roomJID the room that user wants to subscribe to.
+ * @param userJID Room moderator unsubscribes another room user.
+ */
+- (void)unsubscibeFromRoomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID;
 
 @end
 
@@ -167,16 +181,17 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToDiscoverFeaturesForRoomJID:(XMPPJID *)roomJID withError:(NSError *)error;
 
 /**
- * Implement this method when calling [mucsubInstanse didSubscribeForRoomJID:]. It will be invoked if
+ * Implement this method when calling [mucsubInstanse didSubscribeToEvents:roomJID:]. It will be invoked if
  * the request for subscribing roomJID is successfully executed and receives a successful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param events the events that user wants to subscribe to.
  * @param roomJID room JID that user wants to subscribe to.
  */
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didSubscribeToEvents:(NSArray<XMPPSubscribeEvent> *)events roomJID:(XMPPJID *)roomJID;
 
 /**
- * Implement this method when calling [mucsubInstanse failedToSubscribeForRoomJID:withError:]. It will be invoked if
+ * Implement this method when calling [mucsubInstanse failedToSubscribeToRoomJID:withError:]. It will be invoked if
  * the request for subscribing roomJID is unsuccessfully executed or receives an unsuccessful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -184,5 +199,24 @@ typedef NSString* XMPPSubscribeEvent;
  * @param error NSError containing more details of the failure.
  */
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToSubscribeToRoomJID:(XMPPJID *)roomJID withError:(NSError *)error;
+
+/**
+ * Implement this method when calling [mucsubInstanse didUnsubscribeFromRoomJID:]. It will be invoked if
+ * the request for unsubscribing from roomJID is successfully executed and receives a successful response.
+ *
+ * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param roomJID room JID that user wants to unsubscribe from.
+ */
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didUnsubscribeFromRoomJID:(XMPPJID *)roomJID;
+
+/**
+ * Implement this method when calling [mucsubInstanse failedToUnsubscribeFromRoomJID:withError:]. It will be invoked if
+ * the request for unsubscribing from roomJID is unsuccessfully executed or receives an unsuccessful response.
+ *
+ * @param sender XMPPMUCSUB object invoking this delegate method.
+ * @param roomJID room JID that user wants to unsubscribe from.
+ * @param error NSError containing more details of the failure.
+ */
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToUnsubscribeFromRoomJID:(XMPPJID *)roomJID withError:(NSError *)error;
 
 @end
