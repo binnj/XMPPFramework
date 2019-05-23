@@ -151,7 +151,7 @@ typedef NSString* XMPPSubscribeEvent;
  *
  *                 <feature var="urn:xmpp:mucsub:0" />
  */
-- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverFeatures:(NSArray *)features;
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverFeatures:(NSArray<NSXMLElement *> *)features;
 
 /**
  * Implement this method when calling [mucsubInstance discoverFeatures]. It will be invoked if the request
@@ -174,7 +174,7 @@ typedef NSString* XMPPSubscribeEvent;
  *
  * @param roomJID room JID that user wants to discover mucsub service for.
  */
-- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverFeatures:(NSArray *)features forRoomJID:(XMPPJID *)roomJID;
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverFeatures:(NSArray<NSXMLElement *> *)features forRoomJID:(XMPPJID *)roomJID;
 
 /**
  * Implement this method when calling [mucsubInstance discoverMUCSUBForRoomJID:]. It will be invoked if
