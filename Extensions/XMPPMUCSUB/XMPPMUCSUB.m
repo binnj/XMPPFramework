@@ -74,15 +74,15 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
 {
     XMPPLogTrace();
     
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t deactivateBlock = ^{ @autoreleasepool {
         [self->xmppIDTracker removeAllIDs];
         self->xmppIDTracker = nil;
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        deactivateBlock();
     else
-        dispatch_sync(moduleQueue, block);
+        dispatch_sync(moduleQueue, deactivateBlock);
     
 #ifdef _XMPP_CAPABILITIES_H
     [xmppStream removeAutoDelegate:self delegateQueue:moduleQueue fromModulesOfClass:[XMPPCapabilities class]];
@@ -113,7 +113,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
 {
     // This is a public method, so it may be invoked on any thread/queue.
     
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t discoverFeaturesBlock = ^{ @autoreleasepool {
         if (self->hasRequestedFeatures) return; // We've already requested services
         
         NSString *mucService = [NSString stringWithFormat:@"conference.%@", self->xmppStream.myJID.domain];
@@ -134,9 +134,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        discoverFeaturesBlock();
     else
-        dispatch_async(moduleQueue, block);
+        dispatch_async(moduleQueue, discoverFeaturesBlock);
 }
 
 /**
@@ -160,7 +160,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     if (roomJID.bare.length == 0)
         return NO;
     
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t discoverFeaturesForRoomJIDBlock = ^{ @autoreleasepool {
         if (self->hasRequestedFeaturesForRoom[roomJID.bare]) return; // We've already requested rooms
         
         NSXMLElement *query = [NSXMLElement elementWithName:@"query"
@@ -180,9 +180,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        discoverFeaturesForRoomJIDBlock();
     else
-        dispatch_async(moduleQueue, block);
+        dispatch_async(moduleQueue, discoverFeaturesForRoomJIDBlock);
     
     return YES;
 }
@@ -217,7 +217,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     if (roomJID.bare.length == 0)
         return;
     
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t subscribeToEventsBlock = ^{ @autoreleasepool {
        
         NSXMLElement *subscribe = [NSXMLElement elementWithName:@"subscribe" xmlns:XMPPMucSubNamespace];
         if (nickName.length > 0) {
@@ -248,9 +248,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        subscribeToEventsBlock();
     else
-        dispatch_async(moduleQueue, block);
+        dispatch_async(moduleQueue, subscribeToEventsBlock);
     
 }
 
@@ -279,7 +279,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     if (roomJID.bare.length == 0)
         return;
     
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t unsubscribeFromRoomJIDBlock = ^{ @autoreleasepool {
         
         NSXMLElement *unsubscribe = [NSXMLElement elementWithName:@"unsubscribe" xmlns:XMPPMucSubNamespace];
         
@@ -300,9 +300,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        unsubscribeFromRoomJIDBlock();
     else
-        dispatch_async(moduleQueue, block);
+        dispatch_async(moduleQueue, unsubscribeFromRoomJIDBlock);
     
 }
 
@@ -321,7 +321,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     
     // This is a public method, so it may be invoked on any thread/queue.
     
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t fetchSubscriptionListBlock = ^{ @autoreleasepool {
         
         NSXMLElement *subscriptions = [NSXMLElement elementWithName:@"subscriptions" xmlns:XMPPMucSubNamespace];
         XMPPJID *mucServiceJID = [XMPPJID jidWithString:[NSString stringWithFormat:@"conference.%@", self->xmppStream.myJID.domain]];
@@ -340,9 +340,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        fetchSubscriptionListBlock();
     else
-        dispatch_async(moduleQueue, block);
+        dispatch_async(moduleQueue, fetchSubscriptionListBlock);
     
 }
 
@@ -361,7 +361,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     
     // This is a public method, so it may be invoked on any thread/queue.
     
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t fetchSubscribersListForRoomBlock = ^{ @autoreleasepool {
         
         NSXMLElement *subscriptions = [NSXMLElement elementWithName:@"subscriptions" xmlns:XMPPMucSubNamespace];
         
@@ -379,9 +379,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        fetchSubscribersListForRoomBlock();
     else
-        dispatch_async(moduleQueue, block);
+        dispatch_async(moduleQueue, fetchSubscribersListForRoomBlock);
     
 }
 
@@ -405,7 +405,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
  */
 - (void)handleDiscoverFeaturesQueryIQ:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t discoverFeaturesQueryIQBlock = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
         
         if (errorElem) {
@@ -429,9 +429,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        discoverFeaturesQueryIQBlock();
     else
-        dispatch_async(moduleQueue, block);
+        dispatch_async(moduleQueue, discoverFeaturesQueryIQBlock);
 }
 
 /**
@@ -451,7 +451,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
  */
 - (void)handleDiscoverFeaturesForRoomQueryIQ:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t discoverFeaturesForRoomQueryIQBlock = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
         
@@ -474,9 +474,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        discoverFeaturesForRoomQueryIQBlock();
     else
-        dispatch_async(moduleQueue, block);
+        dispatch_async(moduleQueue, discoverFeaturesForRoomQueryIQBlock);
 }
 
 /**
@@ -495,7 +495,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
  */
 - (void)handleSubscribeToRoom:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t subscribeToRoomBlock = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
         
@@ -521,9 +521,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        subscribeToRoomBlock();
     else
-        dispatch_async(moduleQueue, block);
+        dispatch_async(moduleQueue, subscribeToRoomBlock);
 }
 
 /**
@@ -535,7 +535,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
  */
 - (void)handleUnsubscribeFromRoom:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t unsubscribeFromRoomBlock = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
         
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
@@ -555,9 +555,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        unsubscribeFromRoomBlock();
     else
-        dispatch_async(moduleQueue, block);
+        dispatch_async(moduleQueue, unsubscribeFromRoomBlock);
 }
 
 /**
@@ -582,7 +582,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
  */
 - (void)handleFetchSubscriptionList:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t fetchSubscriptionListBlock = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
         NSXMLElement *subscriptions = [iq elementForName:@"subscriptions"];
         
@@ -601,9 +601,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        fetchSubscriptionListBlock();
     else
-        dispatch_async(moduleQueue, block);
+        dispatch_async(moduleQueue, fetchSubscriptionListBlock);
 }
 
 /**
@@ -625,7 +625,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
  */
 - (void)handleFetchSubscribersList:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
-    dispatch_block_t block = ^{ @autoreleasepool {
+    dispatch_block_t fetchSubscribersListBlock = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:@"error"];
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
         NSXMLElement *subscriptions = [iq elementForName:@"subscriptions"];
@@ -645,9 +645,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
-        block();
+        fetchSubscribersListBlock();
     else
-        dispatch_async(moduleQueue, block);
+        dispatch_async(moduleQueue, fetchSubscribersListBlock);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
