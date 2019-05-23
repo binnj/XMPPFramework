@@ -7,7 +7,6 @@
 //
 #import <Foundation/Foundation.h>
 #import "XMPP.h"
-#import "XMPPRoom.h"
 
 #define _XMPP_MUCSUB_H
 
