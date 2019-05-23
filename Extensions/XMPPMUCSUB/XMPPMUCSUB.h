@@ -142,7 +142,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didUnsubscribe:(NSXMLElement *)unsubscribe;
 
 /**
- * Implement this method when calling [mucsubInstanse discoverFeatures]. It will be invoked if the request
+ * Implement this method when calling [mucsubInstance discoverFeatures]. It will be invoked if the request
  * for discovering services is successfully executed and receives a successful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -154,7 +154,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverFeatures:(NSArray *)features;
 
 /**
- * Implement this method when calling [mucsubInstanse discoverFeatures]. It will be invoked if the request
+ * Implement this method when calling [mucsubInstance discoverFeatures]. It will be invoked if the request
  * for discovering services is unsuccessfully executed or receives an unsuccessful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -163,7 +163,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUBFailedToDiscoverFeatures:(XMPPMUCSUB *)sender withError:(NSError *)error;
 
 /**
- * Implement this method when calling [mucsubInstanse discoverMUCSUBForRoomJID:]. It will be invoked if
+ * Implement this method when calling [mucsubInstance discoverMUCSUBForRoomJID:]. It will be invoked if
  * the request for discovering mucsub service is successfully executed and receives a successful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -177,7 +177,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverFeatures:(NSArray *)features ForRoomJID:(XMPPJID *)roomJID;
 
 /**
- * Implement this method when calling [mucsubInstanse discoverMUCSUBForRoomJID:]. It will be invoked if
+ * Implement this method when calling [mucsubInstance discoverMUCSUBForRoomJID:]. It will be invoked if
  * the request for discovering mucsub service is unsuccessfully executed or receives an unsuccessful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -187,7 +187,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToDiscoverFeaturesForRoomJID:(XMPPJID *)roomJID withError:(NSError *)error;
 
 /**
- * Implement this method when calling [mucsubInstanse didSubscribeToEvents:roomJID:]. It will be invoked if
+ * Implement this method when calling [mucsubInstance didSubscribeToEvents:roomJID:]. It will be invoked if
  * the request for subscribing roomJID is successfully executed and receives a successful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -197,7 +197,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didSubscribeToEvents:(NSArray<XMPPSubscribeEvent> *)events roomJID:(XMPPJID *)roomJID;
 
 /**
- * Implement this method when calling [mucsubInstanse failedToSubscribeToRoomJID:withError:]. It will be invoked if
+ * Implement this method when calling [mucsubInstance failedToSubscribeToRoomJID:withError:]. It will be invoked if
  * the request for subscribing roomJID is unsuccessfully executed or receives an unsuccessful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -207,7 +207,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToSubscribeToRoomJID:(XMPPJID *)roomJID withError:(NSError *)error;
 
 /**
- * Implement this method when calling [mucsubInstanse didUnsubscribeFromRoomJID:]. It will be invoked if
+ * Implement this method when calling [mucsubInstance didUnsubscribeFromRoomJID:]. It will be invoked if
  * the request for unsubscribing from roomJID is successfully executed and receives a successful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -216,7 +216,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didUnsubscribeFromRoomJID:(XMPPJID *)roomJID;
 
 /**
- * Implement this method when calling [mucsubInstanse failedToUnsubscribeFromRoomJID:withError:]. It will be invoked if
+ * Implement this method when calling [mucsubInstance failedToUnsubscribeFromRoomJID:withError:]. It will be invoked if
  * the request for unsubscribing from roomJID is unsuccessfully executed or receives an unsuccessful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -226,7 +226,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToUnsubscribeFromRoomJID:(XMPPJID *)roomJID withError:(NSError *)error;
 
 /**
- * Implement this method when calling [mucsubInstanse didFetchSubscriptionList:]. It will be invoked if
+ * Implement this method when calling [mucsubInstance didFetchSubscriptionList:]. It will be invoked if
  * the request for fetching subscription list is successfully executed and receives a successful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -235,7 +235,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didFetchSubscriptionList:(NSXMLElement *)subscriptions;
 
 /**
- * Implement this method when calling [mucsubInstanse failedToFetchSubscriptionListWithError:]. It will be invoked if
+ * Implement this method when calling [mucsubInstance failedToFetchSubscriptionListWithError:]. It will be invoked if
  * the request for fetching subscription list is unsuccessfully executed or receives an unsuccessful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -244,7 +244,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToFetchSubscriptionListWithError:(NSError *)error;
 
 /**
- * Implement this method when calling [mucsubInstanse didFetchSubscribersList:forRoomJID:]. It will be invoked if
+ * Implement this method when calling [mucsubInstance didFetchSubscribersList:forRoomJID:]. It will be invoked if
  * the request for fetching subscribers list is successfully executed and receives a successful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
@@ -253,7 +253,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didFetchSubscribersList:(NSXMLElement *)subscriptions forRoomJID:(XMPPJID *)roomJID;
 
 /**
- * Implement this method when calling [mucsubInstanse failedToFetchSubscriptionListWithError:]. It will be invoked if
+ * Implement this method when calling [mucsubInstance failedToFetchSubscriptionListWithError:]. It will be invoked if
  * the request for fetching subscribers list is unsuccessfully executed or receives an unsuccessful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.

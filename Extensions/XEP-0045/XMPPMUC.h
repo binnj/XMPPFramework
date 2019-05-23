@@ -96,7 +96,7 @@
 - (void)xmppMUC:(XMPPMUC *)sender didDiscoverServices:(NSArray *)services;
 
 /**
-* Implement this method when calling [mucInstanse discoverServices]. It will be invoked if the request
+* Implement this method when calling [mucInstance discoverServices]. It will be invoked if the request
 * for discovering services is unsuccessfully executed or receives an unsuccessful response.
 *
 * @param sender XMPPMUC object invoking this delegate method.
