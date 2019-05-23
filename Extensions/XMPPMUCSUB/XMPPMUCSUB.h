@@ -117,11 +117,16 @@ typedef NSString* XMPPSubscribeEvent;
 /**
  * A user can query the MUC service to get their list of subscriptions.
  *
+ * @see xmppMUCSUB:didFetchSubscriptionList:
+ * @see xmppMUCSUB:failedToFetchSubscriptionListWithError:
  */
 - (void)fetchSubscriptionList;
 
 /**
  * A room moderator can get the list of subscribers by sending <subscriptions/> request directly to the room JID.
+ *
+ * @see xmppMUCSUB:didFetchSubscribersList:forRoomJID
+ * @see xmppMUCSUB:failedToFetchSubscribersListWithError:
  *
  * @param roomJID the room that user wants to get list of subscribers.
  */
@@ -259,6 +264,6 @@ typedef NSString* XMPPSubscribeEvent;
  * @param sender XMPPMUCSUB object invoking this delegate method.
  * @param error NSError containing more details of the failure.
  */
-- (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToFetchSubscribersList:(NSError *)error;
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToFetchSubscribersListWithError:(NSError *)error;
 
 @end
