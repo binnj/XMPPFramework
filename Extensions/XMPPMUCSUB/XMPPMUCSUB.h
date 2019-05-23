@@ -68,7 +68,7 @@ typedef NSString* XMPPSubscribeEvent;
  * This method will attempt to discover existing services for the domain found in xmppStream.myJID.
  *
  * @see xmppMUCSUB:didDiscoverFeatures:
- * @see xmppMUCSUBFailedToDiscoverFeatures:withError:
+ * @see xmppMUCSUB:failedToDiscoverFeaturesWithError:
  */
 - (void)discoverFeatures;
 
@@ -165,7 +165,8 @@ typedef NSString* XMPPSubscribeEvent;
  * @param sender XMPPMUCSUB object invoking this delegate method.
  * @param error NSError containing more details of the failure.
  */
-- (void)xmppMUCSUBFailedToDiscoverFeatures:(XMPPMUCSUB *)sender withError:(NSError *)error;
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender failedToDiscoverFeaturesWithError:(NSError *)error;
+
 
 /**
  * Implement this method when calling [mucsubInstance discoverMUCSUBForRoomJID:]. It will be invoked if

@@ -409,8 +409,7 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
                                                                              withDefaultValue:0]
                                              userInfo:dict];
             
-            [self->multicastDelegate xmppMUCSUBFailedToDiscoverFeatures:self
-                                                              withError:error];
+            [self->multicastDelegate xmppMUCSUB:self failedToDiscoverFeaturesWithError:error];
             return;
         }
         
