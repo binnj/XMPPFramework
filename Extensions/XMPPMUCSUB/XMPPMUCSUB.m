@@ -32,6 +32,29 @@ NSString *const XMPPSubscribeEventConfig = @"urn:xmpp:mucsub:nodes:config";
 NSString *const XMPPSubscribeEventSubject = @"urn:xmpp:mucsub:nodes:subject";
 NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
 
+NSString *const kXMPPCode = @"code";
+NSString *const kXMPPConference = @"conference";
+NSString *const kXMPPError = @"error";
+NSString *const kXMPPEvent = @"event";
+NSString *const kXMPPFeature = @"feature";
+NSString *const kXMPPFrom = @"from";
+NSString *const kXMPPGet = @"get";
+NSString *const kXMPPItem = @"item";
+NSString *const kXMPPItems = @"items";
+NSString *const kXMPPJid = @"jid";
+NSString *const kXMPPMessage = @"message";
+NSString *const kXMPPNick = @"nick";
+NSString *const kXMPPNode = @"node";
+NSString *const kXMPPPassword = @"password";
+NSString *const kXMPPPresence = @"presence";
+NSString *const kXMPPQuery = @"query";
+NSString *const kXMPPResult = @"result";
+NSString *const kXMPPSet = @"set";
+NSString *const kXMPPSubscribe = @"subscribe";
+NSString *const kXMPPSubscriptions = @"subscriptions";
+NSString *const kXMPPUnsubscribe = @"unsubscribe";
+NSString *const kXMPPVar = @"var";
+
 @interface XMPPMUCSUB()
 {
     BOOL hasRequestedFeatures;
@@ -117,10 +140,10 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     dispatch_block_t discoverFeaturesBlock = ^{ @autoreleasepool {
         if (self->hasRequestedFeatures) return; // We've already requested services
         
-        NSString *mucService = [NSString stringWithFormat:@"conference.%@", self->xmppStream.myJID.domain];
-        NSXMLElement *query = [NSXMLElement elementWithName:@"query"
+        NSString *mucService = [NSString stringWithFormat:@"%@.%@", kXMPPConference, self->xmppStream.myJID.domain];
+        NSXMLElement *query = [NSXMLElement elementWithName:kXMPPQuery
                                                       xmlns:XMPPMucSubDiscoInfo];
-        XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
+        XMPPIQ *iq = [XMPPIQ iqWithType:kXMPPGet
                                      to:[XMPPJID jidWithString:mucService]
                               elementID:[self->xmppStream generateUUID]
                                   child:query];
@@ -164,9 +187,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     dispatch_block_t discoverFeaturesForRoomJIDBlock = ^{ @autoreleasepool {
         if (self->hasRequestedFeaturesForRoom[roomJID.bare]) return; // We've already requested rooms
         
-        NSXMLElement *query = [NSXMLElement elementWithName:@"query"
+        NSXMLElement *query = [NSXMLElement elementWithName:kXMPPQuery
                                                       xmlns:XMPPMucSubDiscoInfo];
-        XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
+        XMPPIQ *iq = [XMPPIQ iqWithType:kXMPPGet
                                      to:roomJID
                               elementID:[self->xmppStream generateUUID]
                                   child:query];
@@ -220,22 +243,22 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     
     dispatch_block_t subscribeToEventsBlock = ^{ @autoreleasepool {
        
-        NSXMLElement *subscribe = [NSXMLElement elementWithName:@"subscribe" xmlns:XMPPMucSubNamespace];
+        NSXMLElement *subscribe = [NSXMLElement elementWithName:kXMPPSubscribe xmlns:XMPPMucSubNamespace];
         if (nickName.length > 0) {
-            [subscribe addAttributeWithName:@"nick" stringValue:nickName];
+            [subscribe addAttributeWithName:kXMPPNick stringValue:nickName];
         }
         if (password.length > 0) {
-            [subscribe addAttributeWithName:@"password" stringValue:password];
+            [subscribe addAttributeWithName:kXMPPPassword stringValue:password];
         }
         if (userJID) {
-            [subscribe addAttributeWithName:@"jid" stringValue:userJID.bare];
+            [subscribe addAttributeWithName:kXMPPJid stringValue:userJID.bare];
         }
         for (XMPPSubscribeEvent xmppSubscribeEvent in events) {
-            NSXMLElement *event = [NSXMLElement elementWithName:@"event"];
-            [event addAttributeWithName:@"node" stringValue:xmppSubscribeEvent];
+            NSXMLElement *event = [NSXMLElement elementWithName:kXMPPEvent];
+            [event addAttributeWithName:kXMPPNode stringValue:xmppSubscribeEvent];
             [subscribe addChild:event];
         }
-        XMPPIQ *iq = [XMPPIQ iqWithType:@"set"
+        XMPPIQ *iq = [XMPPIQ iqWithType:kXMPPSet
                                      to:roomJID
                               elementID:[self->xmppStream generateUUID]
                                   child:subscribe];
@@ -282,12 +305,12 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     
     dispatch_block_t unsubscribeFromRoomJIDBlock = ^{ @autoreleasepool {
         
-        NSXMLElement *unsubscribe = [NSXMLElement elementWithName:@"unsubscribe" xmlns:XMPPMucSubNamespace];
+        NSXMLElement *unsubscribe = [NSXMLElement elementWithName:kXMPPUnsubscribe xmlns:XMPPMucSubNamespace];
         
         if (userJID) {
-            [unsubscribe addAttributeWithName:@"jid" stringValue:userJID.bare];
+            [unsubscribe addAttributeWithName:kXMPPJid stringValue:userJID.bare];
         }
-        XMPPIQ *iq = [XMPPIQ iqWithType:@"set"
+        XMPPIQ *iq = [XMPPIQ iqWithType:kXMPPSet
                                      to:roomJID
                               elementID:[self->xmppStream generateUUID]
                                   child:unsubscribe];
@@ -324,10 +347,10 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     
     dispatch_block_t fetchSubscriptionListBlock = ^{ @autoreleasepool {
         
-        NSXMLElement *subscriptions = [NSXMLElement elementWithName:@"subscriptions" xmlns:XMPPMucSubNamespace];
-        XMPPJID *mucServiceJID = [XMPPJID jidWithString:[NSString stringWithFormat:@"conference.%@", self->xmppStream.myJID.domain]];
+        NSXMLElement *subscriptions = [NSXMLElement elementWithName:kXMPPSubscriptions xmlns:XMPPMucSubNamespace];
+        XMPPJID *mucServiceJID = [XMPPJID jidWithString:[NSString stringWithFormat:@"%@.%@", kXMPPConference, self->xmppStream.myJID.domain]];
         
-        XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
+        XMPPIQ *iq = [XMPPIQ iqWithType:kXMPPGet
                                      to: mucServiceJID
                               elementID:[self->xmppStream generateUUID]
                                   child:subscriptions];
@@ -364,9 +387,9 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
     
     dispatch_block_t fetchSubscribersListForRoomBlock = ^{ @autoreleasepool {
         
-        NSXMLElement *subscriptions = [NSXMLElement elementWithName:@"subscriptions" xmlns:XMPPMucSubNamespace];
+        NSXMLElement *subscriptions = [NSXMLElement elementWithName:kXMPPSubscriptions xmlns:XMPPMucSubNamespace];
         
-        XMPPIQ *iq = [XMPPIQ iqWithType:@"get"
+        XMPPIQ *iq = [XMPPIQ iqWithType:kXMPPGet
                                      to: roomJID
                               elementID:[self->xmppStream generateUUID]
                                   child:subscriptions];
@@ -407,13 +430,13 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
 - (void)handleDiscoverFeaturesQueryIQ:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
     dispatch_block_t discoverFeaturesQueryIQBlock = ^{ @autoreleasepool {
-        NSXMLElement *errorElem = [iq elementForName:@"error"];
+        NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
             NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
             NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain
-                                                 code:[errorElem attributeIntegerValueForName:@"code"
+                                                 code:[errorElem attributeIntegerValueForName:kXMPPCode
                                                                              withDefaultValue:0]
                                              userInfo:dict];
             
@@ -421,10 +444,10 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
             return;
         }
         
-        NSXMLElement *query = [iq elementForName:@"query"
+        NSXMLElement *query = [iq elementForName:kXMPPQuery
                                            xmlns:XMPPMucSubDiscoInfo];
         
-        NSArray<NSXMLElement *> *features = [query elementsForName:@"feature"];
+        NSArray<NSXMLElement *> *features = [query elementsForName:kXMPPFeature];
         [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features];
         self->hasRequestedFeatures = NO; // Set this back to NO to allow for future requests
     }};
@@ -453,23 +476,23 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
 - (void)handleDiscoverFeaturesForRoomQueryIQ:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
     dispatch_block_t discoverFeaturesForRoomQueryIQBlock = ^{ @autoreleasepool {
-        NSXMLElement *errorElem = [iq elementForName:@"error"];
-        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
+        NSXMLElement *errorElem = [iq elementForName:kXMPPError];
+        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
             NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
             NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain
-                                                 code:[errorElem attributeIntegerValueForName:@"code"
+                                                 code:[errorElem attributeIntegerValueForName:kXMPPCode
                                                                              withDefaultValue:0]
                                              userInfo:dict];
             [self->multicastDelegate xmppMUCSUB:self failedToDiscoverFeaturesForRoomJID:roomJID withError:error];
             return;
         }
         
-        NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMucSubDiscoInfo];
+        NSXMLElement *query = [iq elementForName:kXMPPQuery xmlns:XMPPMucSubDiscoInfo];
         
-        NSArray<NSXMLElement *> *features = [query elementsForName:@"feature"];
+        NSArray<NSXMLElement *> *features = [query elementsForName:kXMPPFeature];
         [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features forRoomJID:roomJID];
         self->hasRequestedFeaturesForRoom[roomJID.bare] = @NO; // Set this back to NO to allow for future requests
     }};
@@ -497,26 +520,26 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
 - (void)handleSubscribeToRoom:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
     dispatch_block_t subscribeToRoomBlock = ^{ @autoreleasepool {
-        NSXMLElement *errorElem = [iq elementForName:@"error"];
-        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
+        NSXMLElement *errorElem = [iq elementForName:kXMPPError];
+        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
             NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
             NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain
-                                                 code:[errorElem attributeIntegerValueForName:@"code"
+                                                 code:[errorElem attributeIntegerValueForName:kXMPPCode
                                                                              withDefaultValue:0]
                                              userInfo:dict];
             [self->multicastDelegate xmppMUCSUB:self failedToSubscribeToRoomJID:roomJID withError:error];
             return;
         }
         
-        NSXMLElement *subscribe = [iq elementForName:@"subscribe" xmlns:XMPPMucSubNamespace];
+        NSXMLElement *subscribe = [iq elementForName:kXMPPSubscribe xmlns:XMPPMucSubNamespace];
         
-        NSArray *events = [subscribe elementsForName:@"event"];
+        NSArray *events = [subscribe elementsForName:kXMPPEvent];
         NSMutableArray<XMPPSubscribeEvent> *subscribedEvents = [NSMutableArray new];
         for (NSXMLElement *event in events) {
-            [subscribedEvents addObject:[[event attributeForName:@"node"] stringValue]];
+            [subscribedEvents addObject:[[event attributeForName:kXMPPNode] stringValue]];
         }
         [self->multicastDelegate xmppMUCSUB:self didSubscribeToEvents:subscribedEvents roomJID:roomJID];
     }};
@@ -537,15 +560,15 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
 - (void)handleUnsubscribeFromRoom:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
     dispatch_block_t unsubscribeFromRoomBlock = ^{ @autoreleasepool {
-        NSXMLElement *errorElem = [iq elementForName:@"error"];
+        NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         
-        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
+        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
             NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
             NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain
-                                                 code:[errorElem attributeIntegerValueForName:@"code"
+                                                 code:[errorElem attributeIntegerValueForName:kXMPPCode
                                                                              withDefaultValue:0]
                                              userInfo:dict];
             [self->multicastDelegate xmppMUCSUB:self failedToUnsubscribeFromRoomJID:roomJID withError:error];
@@ -584,14 +607,14 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
 - (void)handleFetchSubscriptionList:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
     dispatch_block_t fetchSubscriptionListBlock = ^{ @autoreleasepool {
-        NSXMLElement *errorElem = [iq elementForName:@"error"];
-        NSXMLElement *subscriptions = [iq elementForName:@"subscriptions"];
+        NSXMLElement *errorElem = [iq elementForName:kXMPPError];
+        NSXMLElement *subscriptions = [iq elementForName:kXMPPSubscriptions];
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
             NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
             NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain
-                                                 code:[errorElem attributeIntegerValueForName:@"code"
+                                                 code:[errorElem attributeIntegerValueForName:kXMPPCode
                                                                              withDefaultValue:0]
                                              userInfo:dict];
             [self->multicastDelegate xmppMUCSUB:self failedToFetchSubscriptionListWithError:error];
@@ -627,15 +650,15 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
 - (void)handleFetchSubscribersList:(XMPPIQ *)iq withInfo:(XMPPBasicTrackingInfo *)info
 {
     dispatch_block_t fetchSubscribersListBlock = ^{ @autoreleasepool {
-        NSXMLElement *errorElem = [iq elementForName:@"error"];
-        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:@"from" withDefaultValue:@""]];
-        NSXMLElement *subscriptions = [iq elementForName:@"subscriptions"];
+        NSXMLElement *errorElem = [iq elementForName:kXMPPError];
+        XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
+        NSXMLElement *subscriptions = [iq elementForName:kXMPPSubscriptions];
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
             NSDictionary *dict = @{NSLocalizedDescriptionKey : errMsg};
             NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain
-                                                 code:[errorElem attributeIntegerValueForName:@"code"
+                                                 code:[errorElem attributeIntegerValueForName:kXMPPCode
                                                                              withDefaultValue:0]
                                              userInfo:dict];
             [self->multicastDelegate xmppMUCSUB:self failedToFetchSubscribersListWithError:error];
@@ -726,36 +749,36 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
      * </message>
      */
     
-    NSXMLElement *event = [message elementForName:@"event" xmlns:XMPPPubSubEventNamespace];
-    NSXMLElement *messageItems = [event elementForName:@"items" xmlns:XMPPMucSubMessageNamespace];
-    NSXMLElement *presenceItems = [event elementForName:@"items" xmlns:XMPPMucSubPresenceNamespace];
-    NSXMLElement *subscribeItems = [event elementForName:@"items" xmlns:XMPPMucSubSubscribeNamespace];
-    NSXMLElement *unsubscribeItems = [event elementForName:@"items" xmlns:XMPPMucSubUnsubscribeNamespace];
+    NSXMLElement *event = [message elementForName:kXMPPEvent xmlns:XMPPPubSubEventNamespace];
+    NSXMLElement *messageItems = [event elementForName:kXMPPItems xmlns:XMPPMucSubMessageNamespace];
+    NSXMLElement *presenceItems = [event elementForName:kXMPPItems xmlns:XMPPMucSubPresenceNamespace];
+    NSXMLElement *subscribeItems = [event elementForName:kXMPPItems xmlns:XMPPMucSubSubscribeNamespace];
+    NSXMLElement *unsubscribeItems = [event elementForName:kXMPPItems xmlns:XMPPMucSubUnsubscribeNamespace];
     
     if (messageItems) {
-        NSXMLElement *item = [messageItems elementForName:@"item"];
-        NSXMLElement *messageElement = [item elementForName:@"message"];
+        NSXMLElement *item = [messageItems elementForName:kXMPPItem];
+        NSXMLElement *messageElement = [item elementForName:kXMPPMessage];
         if (messageElement) {
             XMPPMessage *mucSubMessage = [XMPPMessage messageFromElement:messageElement];
             [multicastDelegate xmppMUCSUB:self didReceiveMessage:mucSubMessage];
         }
     }
     if (presenceItems) {
-        NSXMLElement *item = [presenceItems elementForName:@"item"];
-        NSXMLElement *presenceElement = [item elementForName:@"presence"];
+        NSXMLElement *item = [presenceItems elementForName:kXMPPItem];
+        NSXMLElement *presenceElement = [item elementForName:kXMPPPresence];
         if (presenceElement) {
             XMPPPresence *mucSubPresence = [XMPPPresence presenceFromElement:presenceElement];
             [multicastDelegate xmppMUCSUB:self didReceivePresence:mucSubPresence];
         }
     }
     if (subscribeItems) {
-        NSXMLElement *item = [subscribeItems elementForName:@"item"];
-        NSXMLElement *subscribeElement = [item elementForName:@"subscribe"];
+        NSXMLElement *item = [subscribeItems elementForName:kXMPPItem];
+        NSXMLElement *subscribeElement = [item elementForName:kXMPPSubscribe];
         [multicastDelegate xmppMUCSUB:self didSubscribe:subscribeElement];
     }
     if (unsubscribeItems) {
-        NSXMLElement *item = [unsubscribeItems elementForName:@"item"];
-        NSXMLElement *unsubscribeElement = [item elementForName:@"unsubscribe"];
+        NSXMLElement *item = [unsubscribeItems elementForName:kXMPPItem];
+        NSXMLElement *unsubscribeElement = [item elementForName:kXMPPUnsubscribe];
         [multicastDelegate xmppMUCSUB:self didUnsubscribe:unsubscribeElement];
     }
 }
@@ -764,7 +787,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
 {
     NSString *type = [iq type];
     
-    if ([type isEqualToString:@"result"] || [type isEqualToString:@"error"]) {
+    if ([type isEqualToString:kXMPPResult] || [type isEqualToString:kXMPPError]) {
         return [xmppIDTracker invokeForElement:iq withObject:iq];
     }
     
@@ -787,8 +810,8 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
      * </query>
      */
     
-    NSXMLElement *feature = [NSXMLElement elementWithName:@"feature"];
-    [feature addAttributeWithName:@"var" stringValue:XMPPMucSubNamespace];
+    NSXMLElement *feature = [NSXMLElement elementWithName:kXMPPFeature];
+    [feature addAttributeWithName:kXMPPVar stringValue:XMPPMucSubNamespace];
     
     [query addChild:feature];
 }
