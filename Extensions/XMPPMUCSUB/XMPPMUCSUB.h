@@ -13,13 +13,13 @@
 @class XMPPIDTracker;
 
 typedef NSString* XMPPSubscribeEvent;
-#define XMPPSubscribeEventPresence        @"urn:xmpp:mucsub:nodes:presence"
-#define XMPPSubscribeEventMessages        @"urn:xmpp:mucsub:nodes:messages"
-#define XMPPSubscribeEventAffiliations    @"urn:xmpp:mucsub:nodes:affiliations"
-#define XMPPSubscribeEventSubscribers     @"urn:xmpp:mucsub:nodes:subscribers"
-#define XMPPSubscribeEventConfig          @"urn:xmpp:mucsub:nodes:config"
-#define XMPPSubscribeEventSubject         @"urn:xmpp:mucsub:nodes:subject"
-#define XMPPSubscribeEventSystem          @"urn:xmpp:mucsub:nodes:system"
+extern NSString *const XMPPSubscribeEventPresence;
+extern NSString *const XMPPSubscribeEventMessages;
+extern NSString *const XMPPSubscribeEventAffiliations;
+extern NSString *const XMPPSubscribeEventSubscribers;
+extern NSString *const XMPPSubscribeEventConfig;
+extern NSString *const XMPPSubscribeEventSubject;
+extern NSString *const XMPPSubscribeEventSystem;
 
 /**
  * The XMPPMUCSUB module, combined with XMPPRoom, PubSub and associated storage classes,

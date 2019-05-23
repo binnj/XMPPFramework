@@ -24,6 +24,13 @@ NSString *const XMPPMucSubMessageNamespace = @"urn:xmpp:mucsub:nodes:messages";
 NSString *const XMPPMucSubPresenceNamespace = @"urn:xmpp:mucsub:nodes:presence";
 NSString *const XMPPMucSubSubscribeNamespace = @"urn:xmpp:mucsub:nodes:subscribe";
 NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubscribe";
+NSString *const XMPPSubscribeEventPresence = @"urn:xmpp:mucsub:nodes:presence";
+NSString *const XMPPSubscribeEventMessages = @"urn:xmpp:mucsub:nodes:messages";
+NSString *const XMPPSubscribeEventAffiliations = @"urn:xmpp:mucsub:nodes:affiliations";
+NSString *const XMPPSubscribeEventSubscribers = @"urn:xmpp:mucsub:nodes:subscribers";
+NSString *const XMPPSubscribeEventConfig = @"urn:xmpp:mucsub:nodes:config";
+NSString *const XMPPSubscribeEventSubject = @"urn:xmpp:mucsub:nodes:subject";
+NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
 
 @interface XMPPMUCSUB()
 {
