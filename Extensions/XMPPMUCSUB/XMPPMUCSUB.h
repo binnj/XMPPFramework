@@ -174,7 +174,7 @@ typedef NSString* XMPPSubscribeEvent;
  *
  * @param roomJID room JID that user wants to discover mucsub service for.
  */
-- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverFeatures:(NSArray *)features ForRoomJID:(XMPPJID *)roomJID;
+- (void)xmppMUCSUB:(XMPPMUCSUB *)sender didDiscoverFeatures:(NSArray *)features forRoomJID:(XMPPJID *)roomJID;
 
 /**
  * Implement this method when calling [mucsubInstance discoverMUCSUBForRoomJID:]. It will be invoked if

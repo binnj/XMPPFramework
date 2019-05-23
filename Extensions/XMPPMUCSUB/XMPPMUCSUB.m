@@ -463,7 +463,7 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
         NSXMLElement *query = [iq elementForName:@"query" xmlns:XMPPMucSubDiscoInfo];
         
         NSArray *features = [query elementsForName:@"feature"];
-        [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features ForRoomJID:roomJID];
+        [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features forRoomJID:roomJID];
         self->hasRequestedFeaturesForRoom[roomJID.bare] = @NO; // Set this back to NO to allow for future requests
     }};
     
