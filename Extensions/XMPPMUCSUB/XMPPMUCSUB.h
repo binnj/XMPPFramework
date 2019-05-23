@@ -99,7 +99,7 @@ typedef NSString* XMPPSubscribeEvent;
  * @param nickName nickname of user in room.
  * @param password room password if there is any.
  */
-- (void)subscibeToEvents:(NSArray<XMPPSubscribeEvent> *)events roomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID withNick:(NSString *)nickName passwordForRoom:(NSString *)password;
+- (void)subscribeToEvents:(NSArray<XMPPSubscribeEvent> *)events roomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID withNick:(NSString *)nickName passwordForRoom:(NSString *)password;
 
 /**
  * User can unsubscribe from MUC Room events
@@ -112,7 +112,7 @@ typedef NSString* XMPPSubscribeEvent;
  * @param roomJID the room that user wants to subscribe to.
  * @param userJID Room moderator unsubscribes another room user.
  */
-- (void)unsubscibeFromRoomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID;
+- (void)unsubscribeFromRoomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID;
 
 /**
  * A user can query the MUC service to get their list of subscriptions.

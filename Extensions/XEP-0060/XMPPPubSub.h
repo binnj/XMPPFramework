@@ -144,7 +144,7 @@
 /**
  * @param node
  * 
- *     The name of the subscibed node for to configure the subscription.
+ *     The name of the subscribed node for to configure the subscription.
  *     This should be the same node name you used when you subscribed.
  * 
  * @param myBareOrFullJid

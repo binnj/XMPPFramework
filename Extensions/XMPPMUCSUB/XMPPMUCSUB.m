@@ -203,7 +203,7 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
  *     </subscribe>
  * </iq>
  */
-- (void)subscibeToEvents:(NSArray<XMPPSubscribeEvent> *)events roomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID withNick:(NSString *)nickName passwordForRoom:(NSString *)password {
+- (void)subscribeToEvents:(NSArray<XMPPSubscribeEvent> *)events roomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID withNick:(NSString *)nickName passwordForRoom:(NSString *)password {
     
     // This is a public method, so it may be invoked on any thread/queue.
     
@@ -265,7 +265,7 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
  *     <unsubscribe xmlns='urn:xmpp:mucsub:0' jid='hag66@shakespeare.example'/>
  * </iq>
  */
-- (void)unsubscibeFromRoomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID {
+- (void)unsubscribeFromRoomJID:(XMPPJID *)roomJID userJID:(XMPPJID *)userJID {
     
     // This is a public method, so it may be invoked on any thread/queue.
     
@@ -474,7 +474,7 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 }
 
 /**
- * This method handles the response received (or not received) after calling subscibeToEvents:roomJID:userJID:withNick:password.
+ * This method handles the response received (or not received) after calling subscribeToEvents:roomJID:userJID:withNick:password.
  *
  * Example: Server replies with success
  * <iq from='coven@muc.shakespeare.example' to='hag66@shakespeare.example' type='result' id='E6E10350-76CF-40C6-B91B-1EA08C332FC7'>
@@ -521,7 +521,7 @@ NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubsc
 }
 
 /**
- * This method handles the response received (or not received) after calling unsubscibeFromRoomJID:.
+ * This method handles the response received (or not received) after calling unsubscribeFromRoomJID:.
  *
  * Example: A MUC Room responds to unsubscribe request
  * <iq  from='coven@muc.shakespeare.example' to='hag66@shakespeare.example' type='result' id='E6E10350-76CF-40C6-B91B-1EA08C332FC7' />

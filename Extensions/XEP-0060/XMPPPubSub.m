@@ -191,7 +191,7 @@
 		// - unconfigured, configuration supported
 		//
 		// However, in the general sense, the subscription request was accepted.
-		// So these special cases will still be broadcast as "subscibed",
+		// So these special cases will still be broadcast as "subscribed",
 		// and it is the delegates responsibility to handle these special cases if the server is configured as such.
 		
 		if ([[iq type] isEqualToString:@"result"])
