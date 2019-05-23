@@ -259,7 +259,7 @@ typedef NSString* XMPPSubscribeEvent;
 - (void)xmppMUCSUB:(XMPPMUCSUB *)sender didFetchSubscribersList:(NSXMLElement *)subscriptions forRoomJID:(XMPPJID *)roomJID;
 
 /**
- * Implement this method when calling [mucsubInstance failedToFetchSubscriptionListWithError:]. It will be invoked if
+ * Implement this method when calling [mucsubInstance failedToFetchSubscribersListWithError:]. It will be invoked if
  * the request for fetching subscribers list is unsuccessfully executed or receives an unsuccessful response.
  *
  * @param sender XMPPMUCSUB object invoking this delegate method.
