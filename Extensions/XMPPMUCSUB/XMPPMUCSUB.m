@@ -46,6 +46,7 @@ NSString *const XMPPSubscribeEventSystem = @"urn:xmpp:mucsub:nodes:system";
 {
     if ((self = [super initWithDispatchQueue:queue])) {
         hasRequestedFeaturesForRoom = [NSMutableDictionary new];
+        hasRequestedFeatures = NO;
     }
     return self;
 }
