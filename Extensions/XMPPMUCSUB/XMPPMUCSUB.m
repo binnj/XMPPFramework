@@ -754,9 +754,9 @@ NSString *const kXMPPVar = @"var";
     NSXMLElement *items = [event elementForName:kXMPPItems];
     
     if (items) {
+        NSXMLElement *item = [items elementForName:kXMPPItem];
         NSString *node = [[items attributeForName:kXMPPNode] stringValue];
         if ([node isEqualToString:XMPPMucSubMessageNamespace]) {
-            NSXMLElement *item = [items elementForName:kXMPPItem];
             NSXMLElement *messageElement = [item elementForName:kXMPPMessage];
             if (messageElement) {
                 XMPPMessage *mucSubMessage = [XMPPMessage messageFromElement:messageElement];
@@ -764,7 +764,6 @@ NSString *const kXMPPVar = @"var";
             }
         }
         else if ([node isEqualToString:XMPPMucSubPresenceNamespace]) {
-            NSXMLElement *item = [items elementForName:kXMPPItem];
             NSXMLElement *presenceElement = [item elementForName:kXMPPPresence];
             if (presenceElement) {
                 XMPPPresence *mucSubPresence = [XMPPPresence presenceFromElement:presenceElement];
@@ -772,14 +771,16 @@ NSString *const kXMPPVar = @"var";
             }
         }
         else if ([node isEqualToString:XMPPMucSubSubscribeNamespace]) {
-            NSXMLElement *item = [items elementForName:kXMPPItem];
             NSXMLElement *subscribeElement = [item elementForName:kXMPPSubscribe];
-            [multicastDelegate xmppMUCSUB:self didSubscribe:subscribeElement];
+            if (subscribeElement) {
+                [multicastDelegate xmppMUCSUB:self didSubscribe:subscribeElement];
+            }
         }
         else if ([node isEqualToString:XMPPMucSubUnsubscribeNamespace]) {
-            NSXMLElement *item = [items elementForName:kXMPPItem];
             NSXMLElement *unsubscribeElement = [item elementForName:kXMPPUnsubscribe];
-            [multicastDelegate xmppMUCSUB:self didUnsubscribe:unsubscribeElement];
+            if (unsubscribeElement) {
+                [multicastDelegate xmppMUCSUB:self didUnsubscribe:unsubscribeElement];
+            }
         }
     }
 }
