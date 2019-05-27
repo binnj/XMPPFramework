@@ -24,6 +24,7 @@ NSString *const XMPPMucSubMessageNamespace = @"urn:xmpp:mucsub:nodes:messages";
 NSString *const XMPPMucSubPresenceNamespace = @"urn:xmpp:mucsub:nodes:presence";
 NSString *const XMPPMucSubSubscribeNamespace = @"urn:xmpp:mucsub:nodes:subscribe";
 NSString *const XMPPMucSubUnsubscribeNamespace = @"urn:xmpp:mucsub:nodes:unsubscribe";
+
 NSString *const XMPPSubscribeEventPresence = @"urn:xmpp:mucsub:nodes:presence";
 NSString *const XMPPSubscribeEventMessages = @"urn:xmpp:mucsub:nodes:messages";
 NSString *const XMPPSubscribeEventAffiliations = @"urn:xmpp:mucsub:nodes:affiliations";
@@ -750,36 +751,37 @@ NSString *const kXMPPVar = @"var";
      */
     
     NSXMLElement *event = [message elementForName:kXMPPEvent xmlns:XMPPPubSubEventNamespace];
-    NSXMLElement *messageItems = [event elementForName:kXMPPItems xmlns:XMPPMucSubMessageNamespace];
-    NSXMLElement *presenceItems = [event elementForName:kXMPPItems xmlns:XMPPMucSubPresenceNamespace];
-    NSXMLElement *subscribeItems = [event elementForName:kXMPPItems xmlns:XMPPMucSubSubscribeNamespace];
-    NSXMLElement *unsubscribeItems = [event elementForName:kXMPPItems xmlns:XMPPMucSubUnsubscribeNamespace];
+    NSXMLElement *items = [event elementForName:kXMPPItems];
     
-    if (messageItems) {
-        NSXMLElement *item = [messageItems elementForName:kXMPPItem];
-        NSXMLElement *messageElement = [item elementForName:kXMPPMessage];
-        if (messageElement) {
-            XMPPMessage *mucSubMessage = [XMPPMessage messageFromElement:messageElement];
-            [multicastDelegate xmppMUCSUB:self didReceiveMessage:mucSubMessage];
+    if (items) {
+        NSXMLElement *item = [items elementForName:kXMPPItem];
+        NSString *node = [[items attributeForName:kXMPPNode] stringValue];
+        if ([node isEqualToString:XMPPMucSubMessageNamespace]) {
+            NSXMLElement *messageElement = [item elementForName:kXMPPMessage];
+            if (messageElement) {
+                XMPPMessage *mucSubMessage = [XMPPMessage messageFromElement:messageElement];
+                [multicastDelegate xmppMUCSUB:self didReceiveMessage:mucSubMessage];
+            }
         }
-    }
-    if (presenceItems) {
-        NSXMLElement *item = [presenceItems elementForName:kXMPPItem];
-        NSXMLElement *presenceElement = [item elementForName:kXMPPPresence];
-        if (presenceElement) {
-            XMPPPresence *mucSubPresence = [XMPPPresence presenceFromElement:presenceElement];
-            [multicastDelegate xmppMUCSUB:self didReceivePresence:mucSubPresence];
+        else if ([node isEqualToString:XMPPMucSubPresenceNamespace]) {
+            NSXMLElement *presenceElement = [item elementForName:kXMPPPresence];
+            if (presenceElement) {
+                XMPPPresence *mucSubPresence = [XMPPPresence presenceFromElement:presenceElement];
+                [multicastDelegate xmppMUCSUB:self didReceivePresence:mucSubPresence];
+            }
         }
-    }
-    if (subscribeItems) {
-        NSXMLElement *item = [subscribeItems elementForName:kXMPPItem];
-        NSXMLElement *subscribeElement = [item elementForName:kXMPPSubscribe];
-        [multicastDelegate xmppMUCSUB:self didSubscribe:subscribeElement];
-    }
-    if (unsubscribeItems) {
-        NSXMLElement *item = [unsubscribeItems elementForName:kXMPPItem];
-        NSXMLElement *unsubscribeElement = [item elementForName:kXMPPUnsubscribe];
-        [multicastDelegate xmppMUCSUB:self didUnsubscribe:unsubscribeElement];
+        else if ([node isEqualToString:XMPPMucSubSubscribeNamespace]) {
+            NSXMLElement *subscribeElement = [item elementForName:kXMPPSubscribe];
+            if (subscribeElement) {
+                [multicastDelegate xmppMUCSUB:self didSubscribe:subscribeElement];
+            }
+        }
+        else if ([node isEqualToString:XMPPMucSubUnsubscribeNamespace]) {
+            NSXMLElement *unsubscribeElement = [item elementForName:kXMPPUnsubscribe];
+            if (unsubscribeElement) {
+                [multicastDelegate xmppMUCSUB:self didUnsubscribe:unsubscribeElement];
+            }
+        }
     }
 }
 
