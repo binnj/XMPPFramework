@@ -386,6 +386,9 @@ NSString *const kXMPPVar = @"var";
     
     // This is a public method, so it may be invoked on any thread/queue.
     
+    if (roomJID.bare.length == 0)
+        return;
+    
     dispatch_block_t fetchSubscribersListForRoomBlock = ^{ @autoreleasepool {
         
         NSXMLElement *subscriptions = [NSXMLElement elementWithName:kXMPPSubscriptions xmlns:XMPPMucSubNamespace];
@@ -487,14 +490,18 @@ NSString *const kXMPPVar = @"var";
                                                  code:[errorElem attributeIntegerValueForName:kXMPPCode
                                                                              withDefaultValue:0]
                                              userInfo:dict];
-            [self->multicastDelegate xmppMUCSUB:self failedToDiscoverFeaturesForRoomJID:roomJID withError:error];
+            if (roomJID) {
+                [self->multicastDelegate xmppMUCSUB:self failedToDiscoverFeaturesForRoomJID:roomJID withError:error];
+            }
             return;
         }
         
         NSXMLElement *query = [iq elementForName:kXMPPQuery xmlns:XMPPMucSubDiscoInfo];
         
         NSArray<NSXMLElement *> *features = [query elementsForName:kXMPPFeature];
-        [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features forRoomJID:roomJID];
+        if (roomJID) {
+            [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features forRoomJID:roomJID];
+        }
         self->hasRequestedFeaturesForRoom[roomJID.bare] = @NO; // Set this back to NO to allow for future requests
     }};
     
@@ -531,7 +538,9 @@ NSString *const kXMPPVar = @"var";
                                                  code:[errorElem attributeIntegerValueForName:kXMPPCode
                                                                              withDefaultValue:0]
                                              userInfo:dict];
-            [self->multicastDelegate xmppMUCSUB:self failedToSubscribeToRoomJID:roomJID withError:error];
+            if (roomJID) {
+                [self->multicastDelegate xmppMUCSUB:self failedToSubscribeToRoomJID:roomJID withError:error];
+            }
             return;
         }
         
@@ -542,7 +551,9 @@ NSString *const kXMPPVar = @"var";
         for (NSXMLElement *event in events) {
             [subscribedEvents addObject:[[event attributeForName:kXMPPNode] stringValue]];
         }
-        [self->multicastDelegate xmppMUCSUB:self didSubscribeToEvents:subscribedEvents roomJID:roomJID];
+        if (roomJID) {
+            [self->multicastDelegate xmppMUCSUB:self didSubscribeToEvents:subscribedEvents roomJID:roomJID];
+        }
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
@@ -572,11 +583,14 @@ NSString *const kXMPPVar = @"var";
                                                  code:[errorElem attributeIntegerValueForName:kXMPPCode
                                                                              withDefaultValue:0]
                                              userInfo:dict];
-            [self->multicastDelegate xmppMUCSUB:self failedToUnsubscribeFromRoomJID:roomJID withError:error];
+            if (roomJID) {
+                [self->multicastDelegate xmppMUCSUB:self failedToUnsubscribeFromRoomJID:roomJID withError:error];
+            }
             return;
         }
-        
-        [self->multicastDelegate xmppMUCSUB:self didUnsubscribeFromRoomJID:roomJID];
+        if (roomJID) {
+            [self->multicastDelegate xmppMUCSUB:self didUnsubscribeFromRoomJID:roomJID];
+        }
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
@@ -665,8 +679,9 @@ NSString *const kXMPPVar = @"var";
             [self->multicastDelegate xmppMUCSUB:self failedToFetchSubscribersListWithError:error];
             return;
         }
-        
-        [self->multicastDelegate xmppMUCSUB:self didFetchSubscribersList:subscriptions forRoomJID:roomJID];
+        if (roomJID) {
+            [self->multicastDelegate xmppMUCSUB:self didFetchSubscribersList:subscriptions forRoomJID:roomJID];
+        }
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
