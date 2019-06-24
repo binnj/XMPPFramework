@@ -386,6 +386,9 @@ NSString *const kXMPPVar = @"var";
     
     // This is a public method, so it may be invoked on any thread/queue.
     
+    if (roomJID.bare.length == 0)
+        return;
+    
     dispatch_block_t fetchSubscribersListForRoomBlock = ^{ @autoreleasepool {
         
         NSXMLElement *subscriptions = [NSXMLElement elementWithName:kXMPPSubscriptions xmlns:XMPPMucSubNamespace];
@@ -479,6 +482,13 @@ NSString *const kXMPPVar = @"var";
     dispatch_block_t discoverFeaturesForRoomQueryIQBlock = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
+        if (!roomJID) {
+            NSString *errMsg = @"roomJID is nil.";
+            NSDictionary *info = @{NSLocalizedDescriptionKey : errMsg};
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain code:XMPPStreamInvalidParameter userInfo:info];
+            [self->multicastDelegate xmppMUCSUB:self failedToDiscoverFeaturesForRoomJID:roomJID withError:error];
+            return;
+        }
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -523,6 +533,13 @@ NSString *const kXMPPVar = @"var";
     dispatch_block_t subscribeToRoomBlock = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
+        if (!roomJID) {
+            NSString *errMsg = @"roomJID is nil.";
+            NSDictionary *info = @{NSLocalizedDescriptionKey : errMsg};
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain code:XMPPStreamInvalidParameter userInfo:info];
+            [self->multicastDelegate xmppMUCSUB:self failedToSubscribeToRoomJID:roomJID withError:error];
+            return;
+        }
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -564,6 +581,13 @@ NSString *const kXMPPVar = @"var";
         NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
+        if (!roomJID) {
+            NSString *errMsg = @"roomJID is nil.";
+            NSDictionary *info = @{NSLocalizedDescriptionKey : errMsg};
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain code:XMPPStreamInvalidParameter userInfo:info];
+            [self->multicastDelegate xmppMUCSUB:self failedToUnsubscribeFromRoomJID:roomJID withError:error];
+            return;
+        }
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -575,7 +599,6 @@ NSString *const kXMPPVar = @"var";
             [self->multicastDelegate xmppMUCSUB:self failedToUnsubscribeFromRoomJID:roomJID withError:error];
             return;
         }
-        
         [self->multicastDelegate xmppMUCSUB:self didUnsubscribeFromRoomJID:roomJID];
     }};
     
@@ -653,6 +676,13 @@ NSString *const kXMPPVar = @"var";
     dispatch_block_t fetchSubscribersListBlock = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
+        if (!roomJID) {
+            NSString *errMsg = @"roomJID is nil.";
+            NSDictionary *info = @{NSLocalizedDescriptionKey : errMsg};
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain code:XMPPStreamInvalidParameter userInfo:info];
+            [self->multicastDelegate xmppMUCSUB:self failedToFetchSubscribersListWithError:error];
+            return;
+        }
         NSXMLElement *subscriptions = [iq elementForName:kXMPPSubscriptions];
         
         if (errorElem) {
@@ -665,7 +695,6 @@ NSString *const kXMPPVar = @"var";
             [self->multicastDelegate xmppMUCSUB:self failedToFetchSubscribersListWithError:error];
             return;
         }
-        
         [self->multicastDelegate xmppMUCSUB:self didFetchSubscribersList:subscriptions forRoomJID:roomJID];
     }};
     
