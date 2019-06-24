@@ -482,6 +482,10 @@ NSString *const kXMPPVar = @"var";
     dispatch_block_t discoverFeaturesForRoomQueryIQBlock = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
+        if (!roomJID) {
+            XMPPLogVerbose(@"%@: handleDiscoverFeaturesForRoomQueryIQ: RoomJID cannot be nil!", THIS_FILE);
+            return;
+        }
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -490,18 +494,14 @@ NSString *const kXMPPVar = @"var";
                                                  code:[errorElem attributeIntegerValueForName:kXMPPCode
                                                                              withDefaultValue:0]
                                              userInfo:dict];
-            if (roomJID) {
-                [self->multicastDelegate xmppMUCSUB:self failedToDiscoverFeaturesForRoomJID:roomJID withError:error];
-            }
+            [self->multicastDelegate xmppMUCSUB:self failedToDiscoverFeaturesForRoomJID:roomJID withError:error];
             return;
         }
         
         NSXMLElement *query = [iq elementForName:kXMPPQuery xmlns:XMPPMucSubDiscoInfo];
         
         NSArray<NSXMLElement *> *features = [query elementsForName:kXMPPFeature];
-        if (roomJID) {
-            [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features forRoomJID:roomJID];
-        }
+        [self->multicastDelegate xmppMUCSUB:self didDiscoverFeatures:features forRoomJID:roomJID];
         self->hasRequestedFeaturesForRoom[roomJID.bare] = @NO; // Set this back to NO to allow for future requests
     }};
     
@@ -530,6 +530,10 @@ NSString *const kXMPPVar = @"var";
     dispatch_block_t subscribeToRoomBlock = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
+        if (!roomJID) {
+            XMPPLogVerbose(@"%@: handleSubscribeToRoom: RoomJID cannot be nil!", THIS_FILE);
+            return;
+        }
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -538,9 +542,7 @@ NSString *const kXMPPVar = @"var";
                                                  code:[errorElem attributeIntegerValueForName:kXMPPCode
                                                                              withDefaultValue:0]
                                              userInfo:dict];
-            if (roomJID) {
-                [self->multicastDelegate xmppMUCSUB:self failedToSubscribeToRoomJID:roomJID withError:error];
-            }
+            [self->multicastDelegate xmppMUCSUB:self failedToSubscribeToRoomJID:roomJID withError:error];
             return;
         }
         
@@ -551,9 +553,7 @@ NSString *const kXMPPVar = @"var";
         for (NSXMLElement *event in events) {
             [subscribedEvents addObject:[[event attributeForName:kXMPPNode] stringValue]];
         }
-        if (roomJID) {
-            [self->multicastDelegate xmppMUCSUB:self didSubscribeToEvents:subscribedEvents roomJID:roomJID];
-        }
+        [self->multicastDelegate xmppMUCSUB:self didSubscribeToEvents:subscribedEvents roomJID:roomJID];
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
@@ -575,6 +575,10 @@ NSString *const kXMPPVar = @"var";
         NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
+        if (!roomJID) {
+            XMPPLogVerbose(@"%@: handleUnsubscribeFromRoom: RoomJID cannot be nil!", THIS_FILE);
+            return;
+        }
         
         if (errorElem) {
             NSString *errMsg = [errorElem.children componentsJoinedByString:@", "];
@@ -583,14 +587,10 @@ NSString *const kXMPPVar = @"var";
                                                  code:[errorElem attributeIntegerValueForName:kXMPPCode
                                                                              withDefaultValue:0]
                                              userInfo:dict];
-            if (roomJID) {
-                [self->multicastDelegate xmppMUCSUB:self failedToUnsubscribeFromRoomJID:roomJID withError:error];
-            }
+            [self->multicastDelegate xmppMUCSUB:self failedToUnsubscribeFromRoomJID:roomJID withError:error];
             return;
         }
-        if (roomJID) {
-            [self->multicastDelegate xmppMUCSUB:self didUnsubscribeFromRoomJID:roomJID];
-        }
+        [self->multicastDelegate xmppMUCSUB:self didUnsubscribeFromRoomJID:roomJID];
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
@@ -667,6 +667,10 @@ NSString *const kXMPPVar = @"var";
     dispatch_block_t fetchSubscribersListBlock = ^{ @autoreleasepool {
         NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
+        if (!roomJID) {
+            XMPPLogVerbose(@"%@: handleFetchSubscribersList: RoomJID cannot be nil!", THIS_FILE);
+            return;
+        }
         NSXMLElement *subscriptions = [iq elementForName:kXMPPSubscriptions];
         
         if (errorElem) {
@@ -679,9 +683,7 @@ NSString *const kXMPPVar = @"var";
             [self->multicastDelegate xmppMUCSUB:self failedToFetchSubscribersListWithError:error];
             return;
         }
-        if (roomJID) {
-            [self->multicastDelegate xmppMUCSUB:self didFetchSubscribersList:subscriptions forRoomJID:roomJID];
-        }
+        [self->multicastDelegate xmppMUCSUB:self didFetchSubscribersList:subscriptions forRoomJID:roomJID];
     }};
     
     if (dispatch_get_specific(moduleQueueTag))
