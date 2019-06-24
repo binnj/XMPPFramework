@@ -483,7 +483,10 @@ NSString *const kXMPPVar = @"var";
         NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
         if (!roomJID) {
-            XMPPLogVerbose(@"%@: handleDiscoverFeaturesForRoomQueryIQ: RoomJID cannot be nil!", THIS_FILE);
+            NSString *errMsg = @"roomJID is nil.";
+            NSDictionary *info = @{NSLocalizedDescriptionKey : errMsg};
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain code:XMPPStreamInvalidParameter userInfo:info];
+            [self->multicastDelegate xmppMUCSUB:self failedToDiscoverFeaturesForRoomJID:roomJID withError:error];
             return;
         }
         
@@ -531,7 +534,10 @@ NSString *const kXMPPVar = @"var";
         NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
         if (!roomJID) {
-            XMPPLogVerbose(@"%@: handleSubscribeToRoom: RoomJID cannot be nil!", THIS_FILE);
+            NSString *errMsg = @"roomJID is nil.";
+            NSDictionary *info = @{NSLocalizedDescriptionKey : errMsg};
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain code:XMPPStreamInvalidParameter userInfo:info];
+            [self->multicastDelegate xmppMUCSUB:self failedToSubscribeToRoomJID:roomJID withError:error];
             return;
         }
         
@@ -576,7 +582,10 @@ NSString *const kXMPPVar = @"var";
         
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
         if (!roomJID) {
-            XMPPLogVerbose(@"%@: handleUnsubscribeFromRoom: RoomJID cannot be nil!", THIS_FILE);
+            NSString *errMsg = @"roomJID is nil.";
+            NSDictionary *info = @{NSLocalizedDescriptionKey : errMsg};
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain code:XMPPStreamInvalidParameter userInfo:info];
+            [self->multicastDelegate xmppMUCSUB:self failedToUnsubscribeFromRoomJID:roomJID withError:error];
             return;
         }
         
@@ -668,7 +677,10 @@ NSString *const kXMPPVar = @"var";
         NSXMLElement *errorElem = [iq elementForName:kXMPPError];
         XMPPJID *roomJID = [XMPPJID jidWithString:[iq attributeStringValueForName:kXMPPFrom withDefaultValue:@""]];
         if (!roomJID) {
-            XMPPLogVerbose(@"%@: handleFetchSubscribersList: RoomJID cannot be nil!", THIS_FILE);
+            NSString *errMsg = @"roomJID is nil.";
+            NSDictionary *info = @{NSLocalizedDescriptionKey : errMsg};
+            NSError *error = [NSError errorWithDomain:XMPPMucSubErrorDomain code:XMPPStreamInvalidParameter userInfo:info];
+            [self->multicastDelegate xmppMUCSUB:self failedToFetchSubscribersListWithError:error];
             return;
         }
         NSXMLElement *subscriptions = [iq elementForName:kXMPPSubscriptions];
