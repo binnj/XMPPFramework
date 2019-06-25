@@ -122,7 +122,7 @@ extern NSString *const XMPPSubscribeEventSystem;
 - (void)fetchSubscriptionList;
 
 /**
- * A room moderator can get the list of subscribers by sending <subscriptions/> request directly to the room JID.
+ * A room member can get the list of subscribers by sending <subscriptions/> request directly to the room JID.
  *
  * @see xmppMUCSUB:didFetchSubscribersList:forRoomJID
  * @see xmppMUCSUB:failedToFetchSubscribersListWithError:
