@@ -231,9 +231,14 @@
 	return [[[self attributeForName:@"type"] stringValue] isEqualToString:@"chat"];
 }
 
+- (BOOL)isGroupChatMessage
+{
+    return [[[self attributeForName:@"type"] stringValue] isEqualToString:@"groupchat"];
+}
+
 - (BOOL)isChatMessageWithBody
 {
-	if ([self isChatMessage])
+	if ([self isChatMessage] || [self isGroupChatMessage])
 	{
 		return [self isMessageWithBody];
 	}
