@@ -451,7 +451,21 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
                 archivedMessage.bareJid = [messageJid bareJID];
                 archivedMessage.streamBareJidStr = [myJid bare];
                 
+                //get the actual delay timestamp out of the message
                 NSDate *timestamp = [message delayedDeliveryDate];
+                
+                if(timestamp == nil)
+                {
+                    //and as a fallback, parse the id of the 'archived' stanza as a unix timestamp and use that
+                    NSString *idTimestampStr = [[[message elementForName:@"archived"] attributeForName:@"id"] stringValue];
+                    long long unixMiliTime = idTimestampStr.longLongValue;
+                    if(unixMiliTime > 0)
+                    {
+                        NSDate *inferredTimestamp = [NSDate dateWithTimeIntervalSince1970:(unixMiliTime / 1000000)];
+                        timestamp = (timestamp ?: inferredTimestamp);
+                    }
+                }
+                
                 if (timestamp)
                     archivedMessage.timestamp = timestamp;
                 else
