@@ -950,6 +950,9 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
  * 
  * CFReadStreamSetProperty(readStream, kCFStreamNetworkServiceType, kCFStreamNetworkServiceTypeVoIP);
  * CFWriteStreamSetProperty(writeStream, kCFStreamNetworkServiceType, kCFStreamNetworkServiceTypeVoIP);
+ *   If the target device is iOS and is version 16+, these will be invoked instead:
+ * CFReadStreamSetProperty(readStream, kCFStreamNetworkServiceType, kCFStreamNetworkServiceTypeBackground);
+ * CFWriteStreamSetProperty(writeStream, kCFStreamNetworkServiceType, kCFStreamNetworkServiceTypeBackground);
  * 
  * Returns YES if successful, NO otherwise.
  * 

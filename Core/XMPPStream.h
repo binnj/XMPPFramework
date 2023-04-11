@@ -264,7 +264,7 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
 #if TARGET_OS_IPHONE
 
 /**
- * If set, the kCFStreamNetworkServiceTypeVoIP flags will be set on the underlying CFRead/Write streams.
+ * If set, kCFStreamNetworkServiceTypeVoIP (or kCFStreamNetworkServiceTypeBackground for iOS 16+) flags will be set on the underlying CFRead/Write streams.
  * 
  * The default value is NO.
 **/
