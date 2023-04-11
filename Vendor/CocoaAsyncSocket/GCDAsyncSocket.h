@@ -948,6 +948,9 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
  * Configures the socket to allow it to operate when the iOS application has been backgrounded.
  * In other words, this method creates a read & write stream, and invokes:
  * 
+ * CFReadStreamSetProperty(readStream, kCFStreamNetworkServiceType, kCFStreamNetworkServiceTypeVoIP);
+ * CFWriteStreamSetProperty(writeStream, kCFStreamNetworkServiceType, kCFStreamNetworkServiceTypeVoIP);
+ *   If the target device is iOS and is version 16+, these will be invoked instead:
  * CFReadStreamSetProperty(readStream, kCFStreamNetworkServiceType, kCFStreamNetworkServiceTypeBackground);
  * CFWriteStreamSetProperty(writeStream, kCFStreamNetworkServiceType, kCFStreamNetworkServiceTypeBackground);
  * 
