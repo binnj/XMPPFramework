@@ -2,7 +2,7 @@
 //  XMPPPublishingStreamInitiationRequests.m
 //  Mortgage
 //
-//  Created by besat@morgiij.com on 2017-02-03.
+//  Created by 8707839 CANADA INC. on 2017-02-03.
 //  Copyright © 2017 Morgiij Inc. All rights reserved.
 //
 

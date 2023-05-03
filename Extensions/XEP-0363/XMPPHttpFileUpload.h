@@ -2,7 +2,7 @@
 //  XMPPHttpFileUpload.h
 //  supDawg
 //
-//  Created by Besat Zardosht on 2015-11-18.
+//  Created by 8707839 CANADA INC. on 2015-11-18.
 //  Copyright © 2015 binnj inc. All rights reserved.
 //
 

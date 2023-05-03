@@ -2,7 +2,7 @@
 //  XMPPMessageArchiveManagement.m
 //  supDawg
 //
-//  Created by Besat Zardosht on 2015-11-11.
+//  Created by 8707839 CANADA INC. on 2015-11-11.
 //  Copyright © 2015 binnj inc. All rights reserved.
 //
 
