@@ -3,7 +3,7 @@
 //  Mortgage
 //
 //  Created by 8707839 CANADA INC. on 2017-02-03.
-//  Copyright © 2017 Morgiij Inc. All rights reserved.
+//  Copyright © 8707839 CANADA INC. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
