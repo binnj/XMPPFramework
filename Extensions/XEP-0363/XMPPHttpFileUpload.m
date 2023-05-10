@@ -3,7 +3,7 @@
 //  supDawg
 //
 //  Created by 8707839 CANADA INC. on 2015-11-18.
-//  Copyright © 2015 binnj inc. All rights reserved.
+//  Copyright © 8707839 CANADA INC. All rights reserved.
 //
 
 #import "XMPPHttpFileUpload.h"

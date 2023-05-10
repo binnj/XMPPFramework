@@ -84,11 +84,11 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
     return NO;
 }
 /*
- <message xmlns="jabber:client" from="tmgadmin@ejabberd.morgiij.com/Besat&#x2019;s MacBook Pro" to="besat-ldn@ejabberd.morgiij.com"
+ <message xmlns="jabber:client" from="tmgadmin@ejabberd.yourdomain.com/testuser&#x2019;s MacBook Pro" to="testuser-ldn@ejabberd.yourdomain.com"
  type="chat" id="E399E1FF-8D8D-4220-83DD-B8615E6DF277">
  <x xmlns="http://www.apple.com/xmpp/message-attachments">
  <attachment id="1">
- <sipub xmlns="http://jabber.org/protocol/sipub" from="tmgadmin@ejabberd.morgiij.com/Besat&#x2019;s MacBook Pro"
+ <sipub xmlns="http://jabber.org/protocol/sipub" from="tmgadmin@ejabberd.yourdomain.com/testuser&#x2019;s MacBook Pro"
  id="sipubid_7D0EF6A6" mime-type="binary/octet-stream" profile="http://jabber.org/protocol/si/profile/file-transfer">
  <file xmlns="http://jabber.org/protocol/si/profile/file-transfer" xmlns:ichat="apple:profile:transfer-extensions"
  name="small.png" size="1182" ichat:posixflags="000001A4" />
