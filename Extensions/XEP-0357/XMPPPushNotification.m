@@ -1,6 +1,6 @@
 //
 //  XMPPPushNotification.m
-//  supDawg
+//  Mortgage
 //
 //  Created by 8707839 CANADA INC. on 2016-02-11.
 //  Copyright © 8707839 CANADA INC. All rights reserved.

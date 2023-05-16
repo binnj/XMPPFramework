@@ -1,6 +1,6 @@
 //
 //  XMPPHttpFileUpload.h
-//  supDawg
+//  Mortgage
 //
 //  Created by 8707839 CANADA INC. on 2015-11-18.
 //  Copyright © 8707839 CANADA INC. All rights reserved.
