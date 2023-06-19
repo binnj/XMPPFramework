@@ -2,8 +2,8 @@
 //  XMPPPublishingStreamInitiationRequests.m
 //  Mortgage
 //
-//  Created by besat@morgiij.com on 2017-02-03.
-//  Copyright © 2017 Morgiij Inc. All rights reserved.
+//  Created by besat on 2017-02-03.
+//  Copyright © 2017 binnj, inc. All rights reserved.
 //
 
 #if ! __has_feature(objc_arc)
@@ -83,29 +83,7 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
     
     return NO;
 }
-/*
- <message xmlns="jabber:client" from="tmgadmin@ejabberd.morgiij.com/Besat&#x2019;s MacBook Pro" to="besat-ldn@ejabberd.morgiij.com"
- type="chat" id="E399E1FF-8D8D-4220-83DD-B8615E6DF277">
- <x xmlns="http://www.apple.com/xmpp/message-attachments">
- <attachment id="1">
- <sipub xmlns="http://jabber.org/protocol/sipub" from="tmgadmin@ejabberd.morgiij.com/Besat&#x2019;s MacBook Pro"
- id="sipubid_7D0EF6A6" mime-type="binary/octet-stream" profile="http://jabber.org/protocol/si/profile/file-transfer">
- <file xmlns="http://jabber.org/protocol/si/profile/file-transfer" xmlns:ichat="apple:profile:transfer-extensions"
- name="small.png" size="1182" ichat:posixflags="000001A4" />
- </sipub>
- </attachment>
- </x>
- <body/>
- <html xmlns="http://jabber.org/protocol/xhtml-im">
- <body xmlns="http://www.w3.org/1999/xhtml"><img alt="small.png" src="message-attachments:1" width="144" height="144" />
- </body>
- </html>
- <x xmlns="jabber:x:event">
- <composing/>
- </x>
- <active xmlns="http://jabber.org/protocol/chatstates" />
- </message>
- */
+
 
 - (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message {
     // imessage file transfer format

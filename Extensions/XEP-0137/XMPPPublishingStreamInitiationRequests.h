@@ -2,8 +2,8 @@
 //  XMPPPublishingStreamInitiationRequests.h
 //  Mortgage
 //
-//  Created by besat@morgiij.com on 2017-02-03.
-//  Copyright © 2017 Morgiij Inc. All rights reserved.
+//  Created by besat on 2017-02-03.
+//  Copyright © 2017 binnj, inc. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
