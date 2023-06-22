@@ -725,7 +725,7 @@ static NSMutableSet *databaseFileNames;
 		                                             name:NSManagedObjectContextDidSaveNotification
 		                                           object:nil];
 		
-		// Todo: If we knew that our private managedObjectContext was going to be the only one writing to the database,
+		// TODO: If we knew that our private managedObjectContext was going to be the only one writing to the database,
 		// then a small optimization would be to use it as the object when registering above.
 	}
 	

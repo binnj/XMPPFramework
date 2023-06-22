@@ -481,7 +481,7 @@ NSString *const kXMPPvCardTempElement = @"vCard";
 	// Turns out this is hard. Being lazy for now (not like anyone actually uses this, right?)
 	NSXMLElement *tz = [self elementForName:@"TZ"];
 	if (tz != nil) {
-		// This is unlikely to work. :-(
+		// This is unlikely to work.
 		return [NSTimeZone timeZoneWithName:[tz stringValue]];
 	} else {
 		return nil;
