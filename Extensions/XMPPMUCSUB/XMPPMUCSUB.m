@@ -3,7 +3,7 @@
 //  Dollarama
 //
 //  Created by binnj, inc. on 2019-05-15.
-//  Copyright © 2019 binnj. All rights reserved.
+//  Copyright © 2019 binnj, inc. All rights reserved.
 //
 #import "XMPPMUCSUB.h"
 #import "XMPPFramework.h"
