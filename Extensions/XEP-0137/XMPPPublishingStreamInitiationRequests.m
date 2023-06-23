@@ -1,6 +1,6 @@
 //
 //  XMPPPublishingStreamInitiationRequests.m
-//  Mortgage
+//  Dollarama
 //
 //  Created by binnj, inc. on 2017-02-03.
 //  Copyright © 2017 binnj, inc. All rights reserved.

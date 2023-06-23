@@ -1,6 +1,6 @@
 //
 //  XMPPPushNotification.m
-//  supDawg
+//  Dollarama
 //
 //  Created by binnj, inc. on 2016-02-11.
 //  Copyright © 2016 binnj, inc. All rights reserved.
