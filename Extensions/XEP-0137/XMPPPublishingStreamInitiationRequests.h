@@ -2,7 +2,7 @@
 //  XMPPPublishingStreamInitiationRequests.h
 //  Mortgage
 //
-//  Created by besat on 2017-02-03.
+//  Created by binnj, inc. on 2017-02-03.
 //  Copyright © 2017 binnj, inc. All rights reserved.
 //
 
